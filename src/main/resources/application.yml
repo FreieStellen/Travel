@@ -1,0 +1,28 @@
+#配置Tomcat端口号
+server:
+  port: 8081
+#配置数据源
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/travel
+    username: root
+    password: 123456
+    type: com.alibaba.druid.pool.DruidDataSource
+  #配置redis
+  redis:
+    host: 192.168.3.33
+    port: 6379
+  #关闭springboot启动彩蛋
+  main:
+    banner-mode: off
+#配置MybatisPlus
+mybatis-plus:
+  configuration:
+    #配置日志
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #在映射实体或者属性时，将表名或者属性名的下划线去掉，并采用驼峰命名法
+    map-underscore-to-camel-case: true
+    #关闭MybatisPlus的启动logo
+  global-config:
+    banner: false

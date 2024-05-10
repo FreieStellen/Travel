@@ -1,6 +1,10 @@
 package com.travel.entity;
 
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -11,6 +15,8 @@ import java.math.BigDecimal;
  *@Date 2024/3/22 17:20
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class User implements Serializable {
 
     //解决反序列化兼容问题
@@ -19,12 +25,9 @@ public class User implements Serializable {
     /**
      * 主键
      */
+    @TableId
     private Long uId;
 
-    /**
-     * 订单号
-     */
-    private Long orderId;
 
     /**
      * 密码
@@ -32,9 +35,9 @@ public class User implements Serializable {
     private String uPassword;
 
     /**
-     * 账户
+     * 账号
      */
-    private String uAccountid;
+    private String uAccountId;
 
     /**
      * 姓名
@@ -80,4 +83,44 @@ public class User implements Serializable {
      * 状态 0禁用，1正常
      */
     private int uStatus;
+
+    @JsonGetter("uId")
+    public Long getuId() {
+        return uId;
+    }
+
+    @JsonGetter("uPassword")
+    public String getuPassword() {
+        return uPassword;
+    }
+
+    @JsonGetter("uAccountId")
+    public String getuAccountId() {
+        return uAccountId;
+    }
+
+    @JsonGetter("uName")
+    public String getuName() {
+        return uName;
+    }
+
+    @JsonGetter("uPhone")
+    public String getuPhone() {
+        return uPhone;
+    }
+
+    @JsonGetter("uNumber")
+    public String getuNumber() {
+        return uNumber;
+    }
+
+    @JsonGetter("uAccount")
+    public BigDecimal getuAccount() {
+        return uAccount;
+    }
+
+    @JsonGetter("uStatus")
+    public int getuStatus() {
+        return uStatus;
+    }
 }

@@ -1,11 +1,9 @@
 package com.travel.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Date;
 
 /*
@@ -22,6 +20,7 @@ public class Scency {
     /**
      * 主键
      */
+    @TableId
     private Long sId;
 
     /**
@@ -63,11 +62,6 @@ public class Scency {
      * 关闭时间
      */
     private Date closeTime;
-    /**
-     * 预定时间
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime sPredetermineTime;
 
     /**
      * 状态 0开放，1关闭

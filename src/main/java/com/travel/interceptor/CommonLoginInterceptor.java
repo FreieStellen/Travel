@@ -18,15 +18,15 @@ import static com.travel.utils.RedisConstants.LOGIN_CODE_KEY;
 import static com.travel.utils.RedisConstants.LOGIN_CODE_TTL_MINUTES;
 
 /*
- *@ClassName ManagerLoginInterceptor 管理员自定义拦截器(2)
+ *@ClassName ManagerLoginInterceptor 自定义拦截器(1) 放行所有路径，请求头有token的进行redis刷新时长
  *@Author Freie  stellen
  *@Date 2024/5/8 9:58
  */
-public class ManagerLoginInterceptor implements HandlerInterceptor {
+public class CommonLoginInterceptor implements HandlerInterceptor {
 
     private final RedisCache redisCache;
 
-    public ManagerLoginInterceptor(RedisCache redisCache) {
+    public CommonLoginInterceptor(RedisCache redisCache) {
         this.redisCache = redisCache;
     }
 

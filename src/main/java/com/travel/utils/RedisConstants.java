@@ -1,4 +1,4 @@
-package com.travel.common;
+package com.travel.utils;
 
 import lombok.Data;
 
@@ -11,6 +11,7 @@ import lombok.Data;
 public class RedisConstants {
 
     public static final String LOGIN_CODE_KEY = "login:userId:";
+    public static final Long LOGIN_CODE_TTL_MINUTES = 30L;
 
-    public static final Long LOGIN_CODE_TTL_MINUTES = 60L;
+    public static final Long PHONE_CODE_TTL_MINUTES = 1L;
 }

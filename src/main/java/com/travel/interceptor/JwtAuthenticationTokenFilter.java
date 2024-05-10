@@ -1,5 +1,6 @@
-package com.travel.common;
+package com.travel.interceptor;
 
+import com.travel.common.LoginDetails;
 import com.travel.utils.JwtUtil;
 import com.travel.utils.RedisCache;
 import io.jsonwebtoken.Claims;

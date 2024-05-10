@@ -1,4 +1,4 @@
-package com.travel.common;
+package com.travel.utils;
 
 import java.util.regex.Pattern;
 
@@ -17,12 +17,12 @@ public abstract class RegexPatterns {
      * 身份证正则
      */
 
-    public static final String NUMBER_REGEX = "^[1-9]\\d{5}(18|19|20)\\d{2}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])\\d{3}([0-9Xx])$";
+    public static final Pattern NUMBER_REGEX = Pattern.compile("^[1-9]\\d{5}(19|20)\\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\\d{3}[Xx\\d]$");
     /**
      * 验证码正则, 6位数字或字母
      */
 
-    public static final String VERIFY_CODE_REGEX = "^[a-zA-Z\\d]{6}$";
+    public static final Pattern VERIFY_CODE_REGEX = Pattern.compile("\\d{6}");
     /**
      * 密码正则, 大于6位且小于20位且必须包含其中两种（数字或字母或符号）
      */

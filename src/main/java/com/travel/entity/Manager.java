@@ -2,6 +2,7 @@ package com.travel.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -21,6 +22,7 @@ public class Manager implements Serializable {
     /**
      * 主键
      */
+    @TableId
     private Long mId;
 
     /**

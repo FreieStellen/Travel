@@ -1,8 +1,6 @@
 package com.travel.interceptor;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.travel.entity.dto.CommonDto;
-import com.travel.utils.CommonHolder;
+import com.travel.common.CommonHolder;
 import com.travel.utils.JwtUtil;
 import com.travel.utils.RedisCache;
 import io.jsonwebtoken.Claims;
@@ -37,7 +35,7 @@ public class CommonLoginInterceptor implements HandlerInterceptor {
         String token = request.getHeader("token");
 
         //当字符串满足这三种情况的时候会返回true：字符串不为空、不是空白字符、字符串长度大于0
-        if (StringUtils.hasText(token)) {
+        if (!StringUtils.hasText(token)) {
             return true;
         }
         //解析token
@@ -59,11 +57,8 @@ public class CommonLoginInterceptor implements HandlerInterceptor {
         //刷新在redis中的登陆时间
         redisCache.expire(key, LOGIN_CODE_TTL_MINUTES, TimeUnit.MINUTES);
 
-        //将用户信息转化为CommonDto
-        CommonDto commonDto = BeanUtil.fillBeanWithMap(map, new CommonDto(), false);
-
         //将用户信息存到ThreadLocal中
-        CommonHolder.saveUser(commonDto);
+        CommonHolder.saveUser(user);
         //放行
         return true;
     }

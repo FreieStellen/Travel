@@ -18,15 +18,20 @@ public class ValidateCodeUtils {
      * @date: 2024/3/28 14:42
      */
 
-    public static Integer generateValidateCode() {
+    public static String generateValidateCode() {
 
 
-        int code = new Random().nextInt(999999);
+        Integer code = new Random().nextInt(999999);
 
         if (code < 10000) {
             code = code + 100000;
         }
 
-        return code;
+        return code.toString();
+    }
+
+    public static Boolean matches(String code, String redisCode) {
+
+        return code.equals(redisCode);
     }
 }

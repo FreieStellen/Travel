@@ -1,4 +1,4 @@
-package com.travel.utils;
+package com.travel.common;
 
 /*
  *@ClassName CommonHolder ThreadLocal线程

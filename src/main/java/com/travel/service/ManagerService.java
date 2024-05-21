@@ -1,5 +1,6 @@
 package com.travel.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Manager;
@@ -12,7 +13,9 @@ import java.util.HashMap;
 @Service
 public interface ManagerService extends IService<Manager> {
 
-    ResponseResult<HashMap<String, String>> loginNumber(LoginByIdVo loginByIdVo);
+    ResponseResult<HashMap<String, String>> loginByUserName(LoginByIdVo loginByIdVo);
 
-    ResponseResult<Manager> loginPhone(LoginByPhoneVo manager);
+    ResponseResult<HashMap<String, Object>> loginByPhone(LoginByPhoneVo loginByPhoneVo);
+
+    ResponseResult<Page<Manager>> managerPage(int page, int pageSize);
 }

@@ -1,10 +1,7 @@
 package com.travel.utils;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.BoundSetOperations;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.*;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -21,6 +18,9 @@ import java.util.concurrent.TimeUnit;
 public class RedisCache {
     @Autowired
     public RedisTemplate redisTemplate;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 缓存基本的对象，Integer、String、实体类等
@@ -220,5 +220,55 @@ public class RedisCache {
      */
     public Collection<String> keys(final String pattern) {
         return redisTemplate.keys(pattern);
+    }
+
+    /**
+     * @Description: 获得redis中的互斥锁
+     * @param: key value timeout timeUnit
+     * @date: 2024/5/19 11:33
+     */
+
+    public <T> boolean lock(String key, final T value, final Long timeout, final TimeUnit timeUnit) {
+        return redisTemplate.opsForValue().setIfAbsent(key, value, timeout, timeUnit);
+    }
+
+    /**
+     * @Description: 判断给定的元素是否在set集合中
+     * @param: key value
+     * @date: 2024/5/19 11:33
+     */
+
+    public <T> boolean isNumber(String key, final T value) {
+        return stringRedisTemplate.opsForSet().isMember(key, value);
+    }
+
+    /**
+     * @Description: 移除有序set集合中的元素
+     * @param: key value
+     * @date: 2024/5/19 11:33
+     */
+
+    public <T> Long remove(String key, final T value) {
+        return stringRedisTemplate.opsForZSet().remove(key, value);
+    }
+
+    /**
+     * @Description: 获取有序集合set中给定的值
+     * @param: key value
+     * @date: 2024/5/19 11:33
+     */
+
+    public <T> Double score(String key, final T value) {
+        return stringRedisTemplate.opsForZSet().score(key, value);
+    }
+
+    /**
+     * @Description: 添加元素到有序集合set中
+     * @param: key value
+     * @date: 2024/5/19 11:33
+     */
+
+    public boolean add(String key, String value, double score) {
+        return stringRedisTemplate.opsForZSet().add(key, value, score);
     }
 }

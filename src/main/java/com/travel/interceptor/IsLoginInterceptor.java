@@ -1,6 +1,6 @@
 package com.travel.interceptor;
 
-import com.travel.utils.CommonHolder;
+import com.travel.common.CommonHolder;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;

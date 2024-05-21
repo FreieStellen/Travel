@@ -14,5 +14,5 @@ import lombok.EqualsAndHashCode;
 @Data
 public class UserRegistVo extends User {
 
-    private Integer code;
+    private String code;
 }

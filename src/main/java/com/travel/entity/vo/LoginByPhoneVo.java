@@ -10,6 +10,6 @@ import lombok.Data;
 @Data
 public class LoginByPhoneVo {
 
-    private Integer code;
+    private String code;
     private String phone;
 }

@@ -29,10 +29,11 @@ public class MvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new IsLoginInterceptor())
                 .excludePathPatterns(
-                        "/common/sendmsg",
                         "/user/**",
                         "/manager/**",
-                        "/common/**"
+                        "/common/**",
+                        "/scency/**",
+                        "/category/**"
                 ).order(1);//拦截器拦截顺序，默认的拦截顺序是都是0
         registry.addInterceptor(new CommonLoginInterceptor(redisCache)).order(0);
     }

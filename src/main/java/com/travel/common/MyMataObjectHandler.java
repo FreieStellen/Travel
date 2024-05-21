@@ -1,12 +1,12 @@
 package com.travel.common;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.travel.utils.RedisCache;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 
 /*
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class MyMataObjectHandler implements MetaObjectHandler {
 
     @Autowired
-    private HttpSession session;
+    private RedisCache redisCache;
 
     /**
      * @Description: 在插入时自动填充字段
@@ -29,10 +29,9 @@ public class MyMataObjectHandler implements MetaObjectHandler {
 
     @Override
     public void insertFill(MetaObject metaObject) {
+
         this.setFieldValByName("createTime", LocalDateTime.now(), metaObject);
         this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
-        this.setFieldValByName("createUser", session.getAttribute("manager"), metaObject);
-        this.setFieldValByName("updateUser", session.getAttribute("manager"), metaObject);
 
         log.info("--插入时字段--");
         log.info(metaObject.toString());
@@ -40,6 +39,6 @@ public class MyMataObjectHandler implements MetaObjectHandler {
 
     @Override
     public void updateFill(MetaObject metaObject) {
-
+        this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
     }
 }

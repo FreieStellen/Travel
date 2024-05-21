@@ -1,10 +1,10 @@
 package com.travel;
 
 import com.travel.service.UserService;
+import com.travel.utils.PasswordEncoder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootTest
 class TravelApplicationTests {
@@ -19,11 +19,13 @@ class TravelApplicationTests {
 
     @Test
     public void TestBCryptPasswordEncoder() {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String encode1 = encoder.encode("1234");
-        String encode2 = encoder.encode("1234");
-        System.out.println(encode1);
-        System.out.println(encode2);
+        String password = "1234";
+
+
+        String encode = PasswordEncoder.encode(password);
+        System.out.println(encode);
+        System.out.println(PasswordEncoder.matches("@XWX-xu6oyb258971hqsj49qi-58cfe640850cf4ff14002f083ae2ff38"
+                , password));
     }
 
 }

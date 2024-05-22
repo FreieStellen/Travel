@@ -22,18 +22,18 @@ public class PackageOrder implements Serializable {
     /**
      * 主键
      */
-    private Long pOId;
+    private Long Id;
 
 
     /**
      * 订单号
      */
-    private Long pOOrderNumber;
+    private Long orderNumber;
 
     /**
      * 用户id
      */
-    private Long pOUserId;
+    private Long userId;
 
     /**
      * 套餐id

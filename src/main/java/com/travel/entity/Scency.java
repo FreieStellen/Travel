@@ -3,7 +3,6 @@ package com.travel.entity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -24,7 +23,7 @@ public class Scency {
      * 主键
      */
     @TableId
-    private Long sId;
+    private Long id;
 
     /**
      * 分类id
@@ -34,22 +33,22 @@ public class Scency {
     /**
      * 景点名称
      */
-    private String sName;
+    private String name;
 
     /**
      * 景点地址
      */
-    private String sAddress;
+    private String address;
 
     /**
      * 景点评分
      */
-    private String sScore;
+    private String score;
 
     /**
      * 景点门票价格
      */
-    private BigDecimal sTicketGrade;
+    private BigDecimal ticketGrade;
 
     /**
      * 点赞数量
@@ -59,17 +58,17 @@ public class Scency {
     /**
      * 景点门票数量
      */
-    private Long sTicketNum;
+    private Long ticketNum;
 
     /**
      * 景点图片
      */
-    private String sImages;
+    private String images;
 
     /**
      * 景点描述
      */
-    private String sDiscribe;
+    private String discribe;
 
     /**
      * 开放时间
@@ -79,12 +78,12 @@ public class Scency {
     /**
      * 状态 0开放，1关闭
      */
-    private int sStatus;
+    private int status;
 
     /**
      * 状态 0存在，1删除
      */
-    private int sExist;
+    private int exist;
 
     /**
      * 是否点赞
@@ -104,40 +103,4 @@ public class Scency {
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
-    @JsonGetter("sName")
-    public String getsName() {
-        return sName;
-    }
-
-    public String getsAddress() {
-        return sAddress;
-    }
-
-    public String getsScore() {
-        return sScore;
-    }
-
-    public BigDecimal getsTicketGrade() {
-        return sTicketGrade;
-    }
-
-    public Long getsTicketNum() {
-        return sTicketNum;
-    }
-
-    public String getsImages() {
-        return sImages;
-    }
-
-    public String getsDiscribe() {
-        return sDiscribe;
-    }
-
-    public int getsStatus() {
-        return sStatus;
-    }
-
-    public int getsExist() {
-        return sExist;
-    }
 }

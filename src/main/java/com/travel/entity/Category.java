@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /*
- *@ClassName Category 分类实体类
+ *@ClassName Category 分类表
  *@Author Freie  stellen
  *@Date 2024/5/20 16:27
  */

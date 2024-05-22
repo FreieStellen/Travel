@@ -23,27 +23,27 @@ public class Manager implements Serializable {
      * 主键
      */
     @TableId
-    private Long mId;
+    private Long id;
 
     /**
      * 姓名
      */
-    private String mName;
+    private String name;
 
     /**
      * 账号
      */
-    private String mAccount;
+    private String account;
 
     /**
      * 密码
      */
-    private String mPassword;
+    private String password;
 
     /**
      * 手机号
      */
-    private String mPhone;
+    private String phone;
 
     /**
      * 性别
@@ -53,7 +53,7 @@ public class Manager implements Serializable {
     /**
      * 身份证号
      */
-    private String mNumber;
+    private String number;
 
     /**
      * 创建时间
@@ -84,5 +84,5 @@ public class Manager implements Serializable {
     /**
      * 状态 0禁用，1正常
      */
-    private int mStatus;
+    private int status;
 }

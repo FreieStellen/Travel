@@ -1,7 +1,6 @@
 package com.travel.entity;
 
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,28 +25,33 @@ public class User implements Serializable {
      * 主键
      */
     @TableId
-    private Long uId;
+    private Long id;
 
 
     /**
      * 密码
      */
-    private String uPassword;
+    private String password;
 
     /**
      * 账号
      */
-    private String uAccountId;
+    private String accountId;
+
+    /**
+     * 我的收藏
+     */
+    private String collectId;
 
     /**
      * 姓名
      */
-    private String uName;
+    private String name;
 
     /**
      * 手机号
      */
-    private String uPhone;
+    private String phone;
 
     /**
      * 性别
@@ -57,7 +61,7 @@ public class User implements Serializable {
     /**
      * 身份证号
      */
-    private String uNumber;
+    private String number;
 
     /**
      * 头像
@@ -77,50 +81,12 @@ public class User implements Serializable {
     /**
      * 账户余额
      */
-    private BigDecimal uAccount;
+    private BigDecimal account;
 
     /**
      * 状态 0禁用，1正常
      */
-    private int uStatus;
+    private int status;
 
-    @JsonGetter("uId")
-    public Long getuId() {
-        return uId;
-    }
 
-    @JsonGetter("uPassword")
-    public String getuPassword() {
-        return uPassword;
-    }
-
-    @JsonGetter("uAccountId")
-    public String getuAccountId() {
-        return uAccountId;
-    }
-
-    @JsonGetter("uName")
-    public String getuName() {
-        return uName;
-    }
-
-    @JsonGetter("uPhone")
-    public String getuPhone() {
-        return uPhone;
-    }
-
-    @JsonGetter("uNumber")
-    public String getuNumber() {
-        return uNumber;
-    }
-
-    @JsonGetter("uAccount")
-    public BigDecimal getuAccount() {
-        return uAccount;
-    }
-
-    @JsonGetter("uStatus")
-    public int getuStatus() {
-        return uStatus;
-    }
 }

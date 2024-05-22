@@ -21,8 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.travel.utils.RedisConstants.LOGIN_CODE_KEY;
-import static com.travel.utils.RedisConstants.LOGIN_CODE_TTL_MINUTES;
+import static com.travel.utils.RedisConstants.*;
 
 /*
  *@ClassName UserServiceImpl 用户相关功能的实现类
@@ -44,63 +43,73 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
 
     @Override
-    public ResponseResult<User> regist(UserRegistVo userRegistVo) {
+    public ResponseResult<String> regist(UserRegistVo userRegistVo) {
 
-
-        String phone = userRegistVo.getuPhone();
+        //1.校验数据
+        String phone = userRegistVo.getPhone();
         String code = userRegistVo.getCode();
 
-        //校验手机号是否有效
+        //1.1校验手机号是否有效
         if (!RegexUtil.isPhoneInvalid(phone)) {
 
             //如果无效就返回
             return ResponseResult.error("电话号码格式错误！");
         }
 
-        //校验身份证是否有效
-        if (!RegexUtil.isNumberInvalid(userRegistVo.getuNumber())) {
+        //1.2校验身份证是否有效
+        if (!RegexUtil.isNumberInvalid(userRegistVo.getNumber())) {
 
             //如果无效就返回
             return ResponseResult.error("身份证格式错误！");
         }
-        //校验验证码是否有效
+        //1.3校验验证码是否有效
         if (!RegexUtil.isCodeInvalid(code)) {
 
             //如果无效就返回
             return ResponseResult.error("验证码格式错误！");
         }
 
-        //如果有效就去redis中拿到验证码
+        //1.4有效就去redis中拿到验证码
         String redisCode = redisCache.getCacheObject(phone);
 
-        //判断redis中是否存在验证码
+        //1.5判断redis中是否存在验证码
         if (StrUtil.isBlank(redisCode)) {
             //不存在则返回错误信息
             return ResponseResult.error("验证码失效，请重新发送短信");
         }
 
-        //判断验证码是否一致
+        //1.6判断验证码是否一致
         if (!ValidateCodeUtils.matches(code, redisCode)) {
             return ResponseResult.error("验证码错误，请重新输入！");
         }
 
-        User user = new User();
-        //将userRegistVo和user相同的属性赋值给new User
-        BeanUtil.copyProperties(userRegistVo, user);
+        //2.拿到用户的密码进行加密处理
+        String password = userRegistVo.getPassword();
 
-        //拿到用户的密码进行加密处理
-        String password = user.getuPassword();
-
-        //将密码进行加密处理
+        //2.1将密码进行加密处理
         String encode = PasswordEncoder.encode(password);
-        user.setUPassword(encode);
+        userRegistVo.setPassword(encode);
 
-        boolean save = this.save(user);
+        //3.添加用户
+        boolean save = this.save(userRegistVo);
 
         if (!save) {
             return ResponseResult.error("注册失败!");
         }
-        return ResponseResult.success(user, "注册成功！");
+
+        //4.将用户的账号和头像存入缓存中方便登录回显和查重用户名
+        //4.1创建集合添加字段
+        String username = userRegistVo.getAccountId();
+        String avatar = userRegistVo.getAvatar();
+
+        //4.2拼接key
+        String key = USER_NAME_KEY + username;
+        HashMap<String, String> map = new HashMap<>();
+        map.put("username", username);
+        map.put("avatar", avatar);
+        //4.3存入缓存
+        redisCache.setCacheMap(key, map);
+        return ResponseResult.success("注册成功！");
     }
 
 
@@ -111,21 +120,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
 
     @Override
-    public ResponseResult<String> verifyUserName(String username) {
+    public ResponseResult<Object> verifyUserName(String username) {
 
-        LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        //1.去缓存取出用户名和头像
+        //1.1拼接key
+        String key = USER_NAME_KEY + username;
+        //1.1拿出缓存
+        Map<String, String> map = redisCache.getCacheMap(key);
 
-        lambdaQueryWrapper.eq(User::getuAccountId, username);
-        lambdaQueryWrapper.eq(User::getuStatus, 1);
-
-        User one = this.getOne(lambdaQueryWrapper);
-
-        if (!Objects.isNull(one)) {
+        //2.判断是否为空
+        if (!map.isEmpty()) {
             return ResponseResult.error("该用户已存在!");
         }
+        return ResponseResult.success("该用户不存在,可以注册!");
 
-
-        return ResponseResult.success("该用户不存在,可以注册");
     }
 
     /**
@@ -145,10 +153,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
 
         //根据账号(唯一)进行查询
-        lambdaQueryWrapper.eq(User::getuAccountId, loginByIdVo.getUsername());
+        lambdaQueryWrapper.eq(User::getAccountId, loginByIdVo.getUsername());
 
-        //查询管理员状态
-        lambdaQueryWrapper.eq(User::getuStatus, 1);
+        //查询用户状态
+        lambdaQueryWrapper.eq(User::getStatus, 1);
 
         //得到查询结果
         User one = this.getOne(lambdaQueryWrapper);
@@ -159,8 +167,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         //判断密码是否匹配
-        if (!PasswordEncoder.matches(one.getuPassword(), password)) {
-            log.info("密码对比：{}", PasswordEncoder.matches(one.getuPassword(), password));
+        if (!PasswordEncoder.matches(one.getPassword(), password)) {
+            log.info("密码对比：{}", PasswordEncoder.matches(one.getPassword(), password));
             return ResponseResult.error("输入的密码错误，请重新输入！");
         }
 
@@ -169,7 +177,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         log.info(one.toString());
 
         //取出用户id
-        String id = one.getuId().toString();
+        String id = one.getId().toString();
 
         //生成JWT
         String jwt = JwtUtil.createJWT(id);
@@ -220,9 +228,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
 
         //查询手机号是否存在
-        queryWrapper.eq(User::getuPhone, phone);
+        queryWrapper.eq(User::getPhone, phone);
         //查询用户状态是否存在
-        queryWrapper.eq(User::getuStatus, 1);
+        queryWrapper.eq(User::getStatus, 1);
 
         //判断返回结果是否存在
         User user = this.getOne(queryWrapper);
@@ -249,7 +257,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return ResponseResult.error("验证码错误，请重新输入！");
         }
         //拿到用户的id，根据id生成jwt
-        String uid = user.getuId().toString();
+        String uid = user.getId().toString();
 
         //生成jwt令牌
         String jwt = JwtUtil.createJWT(uid);
@@ -272,6 +280,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         //返回成功信息
         return ResponseResult.success(map, "登陆成功");
+    }
+
+    /**
+     * @Description: 回显登录
+     * @param: username
+     * @date: 2024/5/22 16:48
+     */
+
+    @Override
+    public ResponseResult<Map<String, String>> echoLogin(String username) {
+
+        //1.去缓存取出用户名和头像
+        //1.1拼接key
+        String key = USER_NAME_KEY + username;
+        //1.2拿出缓存
+        Map<String, String> map = redisCache.getCacheMap(key);
+
+        //2.判断是否为空
+        if (map.isEmpty()) {
+            return ResponseResult.error("未注册");
+        }
+        return ResponseResult.success(map, "存在账户头像！");
     }
 
 }

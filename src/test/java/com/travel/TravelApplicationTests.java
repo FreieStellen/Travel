@@ -1,16 +1,22 @@
 package com.travel;
 
-import com.travel.service.UserService;
-import com.travel.utils.PasswordEncoder;
+import com.travel.entity.Package;
+import com.travel.mapper.PackageMapper;
+import com.travel.service.PackageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import java.math.BigDecimal;
 
 @SpringBootTest
 class TravelApplicationTests {
 
     @Autowired
-    private UserService userService;
+    private PackageService packageService;
+
+    @Autowired
+    private PackageMapper packageMapper;
 
     @Test
     void contextLoads() {
@@ -19,13 +25,19 @@ class TravelApplicationTests {
 
     @Test
     public void TestBCryptPasswordEncoder() {
-        String password = "1234";
+        Package aPackage = new Package();
+    
+        aPackage.setCategoryId(1793079464066859010L);
+        aPackage.setName("吴寰宇徐扬套餐");
+        aPackage.setSpecial("sb");
+        aPackage.setGrade(BigDecimal.valueOf(2.0));
+        aPackage.setDiscribe("蠢");
+        aPackage.setTicketNum(20);
+        aPackage.setScore("4.5");
+        aPackage.setGradeDiscribe("....");
 
+        packageMapper.insert(aPackage);
 
-        String encode = PasswordEncoder.encode(password);
-        System.out.println(encode);
-        System.out.println(PasswordEncoder.matches("@XWX-xu6oyb258971hqsj49qi-58cfe640850cf4ff14002f083ae2ff38"
-                , password));
     }
 
 }

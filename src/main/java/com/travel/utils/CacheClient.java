@@ -5,7 +5,6 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.travel.common.CommonHolder;
-import com.travel.common.ResponseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,7 +18,7 @@ import java.util.function.Function;
 import static com.travel.utils.RedisConstants.*;
 
 /*
- *@ClassName CacheClient 封装景点查询类
+ *@ClassName CacheClient 封装景点相关操作类
  *@Author Freie  stellen
  *@Date 2024/5/19 10:14
  */
@@ -184,38 +183,6 @@ public class CacheClient {
         redisCache.deleteObject(key);
     }
 
-
-    //点赞
-    public <ID> ResponseResult<String> like(
-            String keyPrefix, ID id, boolean update1, boolean update2) {
-
-        //1.首先拿到登录用户
-        String userId = CommonHolder.getUser();
-
-        //2.判断是否点赞过
-        //2.1拼接点赞的key
-        String key = keyPrefix + id;
-
-        //2.2去redis中获取点赞缓存
-        Double score = redisCache.score(key, userId);
-
-        if (score == null) {
-            //3.如果未点赞，则可以点赞
-            //3.1数据库中点赞数加1--->update1
-            if (update1) {
-                //3.2点赞加1后将数据存到redis中
-                redisCache.add(key, userId, System.currentTimeMillis());
-            }
-        } else {
-            //4.如果点过赞了，就取消点赞
-            //4.1数据库中点赞数减1--->update2
-            if (update2) {
-                //4.2点赞减一后删除redis中的缓存
-                redisCache.remove(key, userId);
-            }
-        }
-        return ResponseResult.success("点赞操作！");
-    }
 
     //是否点赞
     public <ID> Double isLike(String keyPrefix, ID id) {

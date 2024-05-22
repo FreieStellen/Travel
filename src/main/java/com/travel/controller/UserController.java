@@ -1,7 +1,6 @@
 package com.travel.controller;
 
 import com.travel.common.ResponseResult;
-import com.travel.entity.User;
 import com.travel.entity.vo.LoginByIdVo;
 import com.travel.entity.vo.LoginByPhoneVo;
 import com.travel.entity.vo.UserRegistVo;
@@ -11,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /*
  *@ClassName UserLogin 用户控制层
@@ -54,14 +54,14 @@ public class UserController {
     }
 
     /**
-     * @Description: 注册用户方法
+     * @Description: 注册用户
      * @param: user code session
      * @date: 2024/3/31 20:13
      */
 
     @PostMapping("/regist")
-    public ResponseResult<User> regist(@RequestBody UserRegistVo user) {
-        log.info(user.getuAccountId());
+    public ResponseResult<String> regist(@RequestBody UserRegistVo user) {
+        log.info(user.getAccountId());
         return userService.regist(user);
     }
 
@@ -73,7 +73,20 @@ public class UserController {
      */
 
     @GetMapping("/verify/{username}")
-    public ResponseResult<String> verifyUserName(@PathVariable String username) {
+    public ResponseResult<Object> verifyUserName(@PathVariable String username) {
         return userService.verifyUserName(username);
+    }
+
+    /**
+     * @Description: 回显登录
+     * @param: username
+     * @date: 2024/5/22 16:48
+     */
+
+    @GetMapping("/echo/{username}")
+    public ResponseResult<Map<String, String>> echoLogin(@PathVariable String username) {
+        log.info("回显登录：{}", username);
+        return userService.echoLogin(username);
+
     }
 }

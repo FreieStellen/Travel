@@ -52,10 +52,10 @@ public class ManagerServiceImpl extends ServiceImpl<ManagerMapper, Manager> impl
         LambdaQueryWrapper<Manager> lambdaQueryWrapper = new LambdaQueryWrapper<>();
 
         //根据账号(唯一)进行查询
-        lambdaQueryWrapper.eq(Manager::getMAccount, loginByIdVo.getUsername());
+        lambdaQueryWrapper.eq(Manager::getAccount, loginByIdVo.getUsername());
 
         //查询管理员状态
-        lambdaQueryWrapper.eq(Manager::getMStatus, 1);
+        lambdaQueryWrapper.eq(Manager::getStatus, 1);
 
         //得到查询结果
         Manager one = this.getOne(lambdaQueryWrapper);
@@ -66,8 +66,8 @@ public class ManagerServiceImpl extends ServiceImpl<ManagerMapper, Manager> impl
         }
 
         //判断密码是否匹配
-        if (!PasswordEncoder.matches(one.getMPassword(), password)) {
-            log.info("密码对比：{}", PasswordEncoder.matches(one.getMPassword(), password));
+        if (!PasswordEncoder.matches(one.getPassword(), password)) {
+            log.info("密码对比：{}", PasswordEncoder.matches(one.getPassword(), password));
             return ResponseResult.error("输入的密码错误，请重新输入！");
         }
 
@@ -76,7 +76,7 @@ public class ManagerServiceImpl extends ServiceImpl<ManagerMapper, Manager> impl
         log.info(one.toString());
 
         //取出管理员id
-        String id = one.getMId().toString();
+        String id = one.getId().toString();
 
         //生成JWT
         String jwt = JwtUtil.createJWT(id);
@@ -126,9 +126,9 @@ public class ManagerServiceImpl extends ServiceImpl<ManagerMapper, Manager> impl
         LambdaQueryWrapper<Manager> queryWrapper = new LambdaQueryWrapper<>();
 
         //查询手机号是否存在
-        queryWrapper.eq(Manager::getMPhone, phone);
+        queryWrapper.eq(Manager::getPhone, phone);
         //查询用户状态是否存在
-        queryWrapper.eq(Manager::getMStatus, 1);
+        queryWrapper.eq(Manager::getStatus, 1);
 
         //判断返回结果是否存在
         Manager manager = this.getOne(queryWrapper);
@@ -152,7 +152,7 @@ public class ManagerServiceImpl extends ServiceImpl<ManagerMapper, Manager> impl
             return ResponseResult.error("验证码错误，请重新输入！");
         }
         //存在就拿到用户的id，根据id生成jwt
-        String uid = manager.getMId().toString();
+        String uid = manager.getId().toString();
 
         //生成jwt令牌
         String jwt = JwtUtil.createJWT(uid);
@@ -192,7 +192,7 @@ public class ManagerServiceImpl extends ServiceImpl<ManagerMapper, Manager> impl
         LambdaQueryWrapper<Manager> queryWrapper = new LambdaQueryWrapper<>();
 
         //构造过滤条件(状态为1即存在)和排序条件(根据创建时间降序排序)
-        queryWrapper.eq(Manager::getMStatus, 1)
+        queryWrapper.eq(Manager::getStatus, 1)
                 .orderByDesc(Manager::getCreateTime);
 
         //执行语句

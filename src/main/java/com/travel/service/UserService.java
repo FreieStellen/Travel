@@ -9,15 +9,19 @@ import com.travel.entity.vo.UserRegistVo;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public interface UserService extends IService<User> {
 
-    ResponseResult<User> regist(UserRegistVo user);
+    ResponseResult<String> regist(UserRegistVo user);
 
-    ResponseResult<String> verifyUserName(String username);
+    ResponseResult<Object> verifyUserName(String username);
 
     ResponseResult<HashMap<String, Object>> loginByUserName(LoginByIdVo user);
 
     ResponseResult<HashMap<String, Object>> loginByPhone(LoginByPhoneVo loginByPhoneVo);
+
+    ResponseResult<Map<String, String>> echoLogin(String username);
+
 }

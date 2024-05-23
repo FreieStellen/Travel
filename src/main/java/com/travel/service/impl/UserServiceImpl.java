@@ -104,11 +104,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         //4.2拼接key
         String key = USER_NAME_KEY + username;
-        HashMap<String, String> map = new HashMap<>();
-        map.put("username", username);
-        map.put("avatar", avatar);
+
         //4.3存入缓存
-        redisCache.setCacheMap(key, map);
+        redisCache.setCacheObject(key, username);
         return ResponseResult.success("注册成功！");
     }
 
@@ -126,10 +124,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //1.1拼接key
         String key = USER_NAME_KEY + username;
         //1.1拿出缓存
-        Map<String, String> map = redisCache.getCacheMap(key);
+        String userName = redisCache.getCacheObject(key);
 
         //2.判断是否为空
-        if (!map.isEmpty()) {
+        if (StrUtil.isNotBlank(userName)) {
             return ResponseResult.error("该用户已存在!");
         }
         return ResponseResult.success("该用户不存在,可以注册!");
@@ -289,19 +287,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
 
     @Override
-    public ResponseResult<Map<String, String>> echoLogin(String username) {
+    public ResponseResult<String> echoLogin(String username) {
 
         //1.去缓存取出用户名和头像
         //1.1拼接key
         String key = USER_NAME_KEY + username;
         //1.2拿出缓存
-        Map<String, String> map = redisCache.getCacheMap(key);
+        String userName = redisCache.getCacheObject(key);
 
         //2.判断是否为空
-        if (map.isEmpty()) {
+        if (StrUtil.isBlank(userName)) {
             return ResponseResult.error("未注册");
         }
-        return ResponseResult.success(map, "存在账户头像！");
+        return ResponseResult.success(userName, "存在账户头像！");
     }
 
 }

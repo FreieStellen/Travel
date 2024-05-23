@@ -4,9 +4,16 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.travel.common.CommonHolder;
+import com.travel.entity.Scency;
+import com.travel.entity.UserCollect;
+import com.travel.service.PackageService;
+import com.travel.service.ScencyService;
+import com.travel.service.UserCollectService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -28,6 +35,18 @@ public class CacheClient {
 
     @Autowired
     private RedisCache redisCache;
+
+    @Lazy
+    @Autowired
+    private ScencyService scencyService;
+
+    @Lazy
+    @Autowired
+    private PackageService packageService;
+
+    @Autowired
+    private UserCollectService userCollectService;
+
 
 //    private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
 
@@ -200,5 +219,58 @@ public class CacheClient {
 
         log.info("查询：{}", score);
         return score;
+    }
+
+    //点赞
+    public <R> boolean like(String keyPrefix, Long id, Class<R> type) {
+
+        //1.首先拿到登录用户
+        String userId = CommonHolder.getUser();
+
+        //2.判断是否点赞过
+        //2.1拼接点赞的key
+        String key = keyPrefix + id;
+
+        //2.2去redis中获取点赞缓存
+        Double score = redisCache.score(key, userId);
+
+        //2.3构建条件构造器
+        LambdaQueryWrapper<UserCollect> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+
+        if (score == null) {
+            //3.如果未点赞，则可以点赞
+            //3.1数据库中点赞数加1--->update
+            boolean update = (type == Scency.class) ?
+                    scencyService.update().setSql("liked = liked + 1").eq("id", id).update()
+                    : packageService.update().setSql("liked = liked + 1").eq("id", id).update();
+
+            //3.2用户收藏表中加入个人收藏--->save
+            UserCollect userCollect = new UserCollect();
+            userCollect.setUserId(Long.valueOf(userId));
+            userCollect.setCollectId(id);
+
+            boolean save = userCollectService.save(userCollect);
+            if (update && save) {
+                //3.2点赞加1后将数据存到redis中
+                redisCache.add(key, userId, System.currentTimeMillis());
+                return true;
+            }
+        } else {
+            //4.如果点过赞了，就取消点赞
+            //4.1数据库中点赞数减1--->update
+            boolean update = (type == Scency.class) ?
+                    scencyService.update().setSql("liked = liked - 1").eq("id", id).update()
+                    : packageService.update().setSql("liked = liked - 1").eq("id", id).update();
+
+            //4.22用户收藏表中删除个人收藏--->remove
+            lambdaQueryWrapper.eq(UserCollect::getCollectId, id);
+            boolean remove = userCollectService.remove(lambdaQueryWrapper);
+            if (update && remove) {
+                //4.2点赞减一后删除redis中的缓存
+                redisCache.remove(key, userId);
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -38,10 +38,6 @@ public class User implements Serializable {
      */
     private String accountId;
 
-    /**
-     * 我的收藏
-     */
-    private String collectId;
 
     /**
      * 姓名

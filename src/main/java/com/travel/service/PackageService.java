@@ -9,4 +9,8 @@ import org.springframework.stereotype.Service;
 @Service
 public interface PackageService extends IService<Package> {
     ResponseResult<String> add(PackageDto packageDto);
+
+    ResponseResult<Package> selectPackageById(Long id);
+
+    ResponseResult<String> likePackage(Long id);
 }

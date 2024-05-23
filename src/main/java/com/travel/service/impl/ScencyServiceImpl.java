@@ -1,15 +1,12 @@
 package com.travel.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.travel.common.CommonHolder;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Scency;
-import com.travel.entity.User;
 import com.travel.mapper.ScencyMapper;
 import com.travel.service.ScencyService;
-import com.travel.service.UserService;
+import com.travel.service.UserCollectService;
 import com.travel.utils.CacheClient;
 import com.travel.utils.RedisCache;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +36,8 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
     private CacheClient cacheClient;
 
     @Autowired
-    private UserService userService;
+    private UserCollectService userCollectService;
+
 
     /**
      * @Description: 添加景点
@@ -120,44 +118,54 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
     @Transactional
     @Override
     public ResponseResult<String> likeScency(Long id) {
+//        //1.首先拿到登录用户
+//        String userId = CommonHolder.getUser();
+//
+//        //2.判断是否点赞过
+//        //2.1拼接点赞的key
+//        String key = SCENCY_LIKED_KEY + id;
+//
+//        //2.2去redis中获取点赞缓存
+//        Double score = redisCache.score(key, userId);
+//
+//        //2.3构建条件构造器
+//        LambdaQueryWrapper<UserCollect> wrapper = new LambdaQueryWrapper<>();
+//        if (score == null) {
+//            //3.如果未点赞，则可以点赞
+//            //3.1数据库中点赞数加1--->update
+//            boolean update = update().setSql("liked = liked + 1").eq("id", id).update();
+//
+//            //3.2用户收藏表中加入个人收藏--->save
+//            UserCollect userCollect = new UserCollect();
+//            userCollect.setUserId(Long.valueOf(userId));
+//            userCollect.setCollectId(id);
+//
+//            boolean save = userCollectService.save(userCollect);
+//
+//            if (update && save) {
+//                //3.2点赞加1后将数据存到redis中
+//                redisCache.add(key, userId, System.currentTimeMillis());
+//            }
+//        } else {
+//            //4.如果点过赞了，就取消点赞
+//            //4.1数据库中点赞数减1--->update
+//            boolean update = update().setSql("liked = liked - 1").eq("id", id).update();
+//
+//            //4.2用户收藏表中删除个人收藏--->
+//            wrapper.eq(UserCollect::getCollectId, id);
+//            boolean remove = userCollectService.remove(wrapper);
+//            if (update && remove) {
+//                //4.2点赞减一后删除redis中的缓存
+//                redisCache.remove(key, userId);
+//            }
+//        }
+//        return ResponseResult.success("点赞收藏操作！");
 
-        //1.首先拿到登录用户
-        String userId = CommonHolder.getUser();
+        boolean like = cacheClient.like(SCENCY_LIKED_KEY, id, Scency.class);
 
-        //2.判断是否点赞过
-        //2.1拼接点赞的key
-        String key = SCENCY_LIKED_KEY + id;
-
-        //2.2去redis中获取点赞缓存
-        Double score = redisCache.score(key, userId);
-
-        //2.3构建条件构造器
-        LambdaUpdateWrapper<User> wrapper = new LambdaUpdateWrapper<>();
-
-        if (score == null) {
-            //3.如果未点赞，则可以点赞
-            //3.1数据库中点赞数加1--->update
-            boolean update = update().setSql("liked = liked + 1").eq("s_id", id).update();
-
-            //3.2用户表中加入个人收藏--->update1
-            boolean update1 = userService.update(wrapper.set(User::getCollectId, id).eq(User::getId, userId));
-
-            if (update && update1) {
-                //3.2点赞加1后将数据存到redis中
-                redisCache.add(key, userId, System.currentTimeMillis());
-            }
-        } else {
-            //4.如果点过赞了，就取消点赞
-            //4.1数据库中点赞数减1--->update
-            boolean update = update().setSql("liked = liked - 1").eq("s_id", id).update();
-
-            //4.22用户表中删除个人收藏--->update1
-            boolean update1 = userService.update(wrapper.set(User::getCollectId, null).eq(User::getId, userId));
-            if (update && update1) {
-                //4.2点赞减一后删除redis中的缓存
-                redisCache.remove(key, userId);
-            }
+        if (like) {
+            return ResponseResult.success("点赞收藏景点操作成功！");
         }
-        return ResponseResult.success("点赞收藏操作！");
+        return ResponseResult.error("点赞收藏景点操作失败！");
     }
 }

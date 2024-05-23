@@ -27,6 +27,7 @@ public class RedisConstants {
     public static final Long LOCK_CODE_TTL_SECONDS = 10L;
 
     public static final String SCENCY_LIKED_KEY = "scency:likeId:";
+    public static final String PACKAGE_LIKED_KEY = "package:likeId:";
 
     public static final Long NULL_CODE_TTL_MINUTES = 2L;
 

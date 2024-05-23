@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /*
  *@ClassName UserLogin 用户控制层
@@ -84,7 +83,7 @@ public class UserController {
      */
 
     @GetMapping("/echo/{username}")
-    public ResponseResult<Map<String, String>> echoLogin(@PathVariable String username) {
+    public ResponseResult<String> echoLogin(@PathVariable String username) {
         log.info("回显登录：{}", username);
         return userService.echoLogin(username);
 

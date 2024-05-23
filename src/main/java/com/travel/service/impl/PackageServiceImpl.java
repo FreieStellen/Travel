@@ -8,6 +8,8 @@ import com.travel.entity.dto.PackageDto;
 import com.travel.mapper.PackageMapper;
 import com.travel.service.PackageScencyService;
 import com.travel.service.PackageService;
+import com.travel.service.UserCollectService;
+import com.travel.utils.CacheClient;
 import com.travel.utils.RedisCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.travel.utils.RedisConstants.PACKAGE_CODE_KEY;
-import static com.travel.utils.RedisConstants.PACKAGE_CODE_TTL_MINUTES;
+import static com.travel.utils.RedisConstants.*;
 
 /*
  *@ClassName PackageServiceImpl
@@ -35,6 +37,12 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
 
     @Autowired
     private PackageScencyService packageScencyService;
+
+    @Autowired
+    private CacheClient cacheClient;
+
+    @Autowired
+    private UserCollectService userCollectService;
 
     /**
      * @Description: 添加套餐
@@ -80,5 +88,59 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
         }
 
         return ResponseResult.success("添加成功！");
+    }
+
+    /**
+     * @Description: 查询套餐
+     * @param: id
+     * @date: 2024/5/23 10:52
+     */
+
+    @Override
+    public ResponseResult<Package> selectPackageById(Long id) {
+
+        //查询套餐
+        Package aPackage = cacheClient
+                .queryWithPassThrough(PACKAGE_CODE_KEY, id, Package.class, this::getById, PACKAGE_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+
+        if (Objects.isNull(aPackage)) {
+            return ResponseResult.error("获取失败！");
+        }
+
+        //判断是否点赞
+        isLike(aPackage);
+        return ResponseResult.success(aPackage);
+    }
+
+    /**
+     * @Description: 是否点赞
+     * @param: scency
+     * @date: 2024/5/23 14:22
+     */
+
+    public void isLike(Package apackage) {
+
+        Double like = cacheClient.isLike(PACKAGE_LIKED_KEY, apackage.getId());
+        apackage.setLike(like != null);
+
+        log.info("拿到套餐：{}", apackage);
+    }
+
+    /**
+     * @Description: 点赞
+     * @param: id
+     * @date: 2024/5/23 11:02
+     */
+
+    @Transactional
+    @Override
+    public ResponseResult<String> likePackage(Long id) {
+
+        boolean like = cacheClient.like(PACKAGE_LIKED_KEY, id, Package.class);
+
+        if (like) {
+            return ResponseResult.success("点赞收藏套餐操作成功！");
+        }
+        return ResponseResult.error("点赞收藏套餐操作失败！");
     }
 }

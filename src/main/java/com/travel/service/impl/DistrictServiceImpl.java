@@ -3,9 +3,9 @@ package com.travel.service.impl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travel.common.ResponseResult;
-import com.travel.entity.Category;
-import com.travel.mapper.CategoryMapper;
-import com.travel.service.CategoryService;
+import com.travel.entity.District;
+import com.travel.mapper.DistrictMapper;
+import com.travel.service.DistrictService;
 import org.springframework.stereotype.Service;
 
 /*
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
  *@Date 2024/5/20 16:35
  */
 @Service
-public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> implements CategoryService {
+public class DistrictServiceImpl extends ServiceImpl<DistrictMapper, District> implements DistrictService {
 
     /**
      * @Description: 添加分类
@@ -23,9 +23,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
      */
 
     @Override
-    public ResponseResult<String> add(Category category) {
+    public ResponseResult<String> add(District district) {
 
-        boolean save = save(category);
+        boolean save = save(district);
 
         if (save) {
             return ResponseResult.success("添加成功！");
@@ -39,10 +39,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
      */
 
     @Override
-    public ResponseResult<Page<Category>> selectList() {
+    public ResponseResult<Page<District>> selectList() {
 
 
-        Page<Category> page = query().orderByAsc("sort").page(new Page<>(0, 5));
+        Page<District> page = query().orderByAsc("sort").page(new Page<>(0, 5));
 
 
         return ResponseResult.success(page);

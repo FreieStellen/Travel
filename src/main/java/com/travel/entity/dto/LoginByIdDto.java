@@ -12,4 +12,8 @@ public class LoginByIdVo {
 
     private String username;
     private String password;
+
+
+    //判断是否记住密码
+    private boolean flag;
 }

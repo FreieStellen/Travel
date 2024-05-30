@@ -2,8 +2,8 @@ package com.travel.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travel.common.ResponseResult;
-import com.travel.entity.Category;
-import com.travel.service.CategoryService;
+import com.travel.entity.District;
+import com.travel.service.DistrictService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/category")
-public class CategoryController {
+public class DistrictController {
 
     @Autowired
-    private CategoryService categoryService;
+    private DistrictService districtService;
 
     /**
      * @Description: 添加分类
@@ -28,10 +28,10 @@ public class CategoryController {
      */
 
     @PostMapping("/save")
-    public ResponseResult<String> add(@RequestBody Category category) {
+    public ResponseResult<String> add(@RequestBody District district) {
 
-        log.info("添加的分类：{}", category);
-        return categoryService.add(category);
+        log.info("添加的分类：{}", district);
+        return districtService.add(district);
     }
 
     /**
@@ -41,7 +41,7 @@ public class CategoryController {
      */
 
     @GetMapping("/list")
-    public ResponseResult<Page<Category>> selectList() {
-        return categoryService.selectList();
+    public ResponseResult<Page<District>> selectList() {
+        return districtService.selectList();
     }
 }

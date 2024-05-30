@@ -30,9 +30,14 @@ public class UserCollect {
     private Long userId;
 
     /**
-     * 景点/套餐id
+     * 套餐id
      */
-    private Long collectId;
+    private Long packageId;
+
+    /**
+     * 景点id
+     */
+    private Long scencyId;
 
     /**
      * 创建时间

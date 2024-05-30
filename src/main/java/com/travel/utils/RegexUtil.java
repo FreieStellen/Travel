@@ -1,7 +1,5 @@
 package com.travel.utils;
 
-import java.util.regex.Pattern;
-
 import static com.travel.utils.RegexPatterns.*;
 
 /*
@@ -18,7 +16,7 @@ public class RegexUtil {
      */
 
     public static boolean isUsernameInvalid(String username) {
-        return username != null && username.length() >= 6 && username.length() <= 20;
+        return username != null && username.length() >= 1 && username.length() <= 10;
     }
 
     /**
@@ -29,7 +27,7 @@ public class RegexUtil {
      */
 
     public static boolean isPasswordInvalid(String password) {
-        return Pattern.matches(password, RegexPatterns.PASSWORD_REGEX);
+        return password != null && PASSWORD_REGEX.matcher(password).matches();
     }
 
     /**
@@ -40,7 +38,7 @@ public class RegexUtil {
      */
 
     public static boolean isPhoneInvalid(String phone) {
-        return PHONE_REGEX.matcher(phone).matches();
+        return phone != null && PHONE_REGEX.matcher(phone).matches();
     }
 
     /**
@@ -51,7 +49,7 @@ public class RegexUtil {
      */
 
     public static boolean isNumberInvalid(String number) {
-        return NUMBER_REGEX.matcher(number).matches();
+        return number != null && NUMBER_REGEX.matcher(number).matches();
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.travel.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Package;
 import com.travel.entity.dto.PackageDto;
@@ -57,5 +58,16 @@ public class PackageController {
     public ResponseResult<String> likePackage(@PathVariable Long id) {
         log.info("景点id：{}", id);
         return packageService.likePackage(id);
+    }
+
+    /**
+     * @Description: 分页查询
+     * @param: page, pageSize
+     * @date: 2024/5/23 15:36
+     */
+
+    @GetMapping("/page")
+    public ResponseResult<Page<Package>> pagePackage(int current, int pageSize) {
+        return packageService.pagePackage(current, pageSize);
     }
 }

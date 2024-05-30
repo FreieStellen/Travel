@@ -9,7 +9,7 @@ import com.travel.service.DistrictService;
 import org.springframework.stereotype.Service;
 
 /*
- *@ClassName CategoryServiceImpl 分类实现类
+ *@ClassName DistrictServiceImpl 分类实现类
  *@Author Freie  stellen
  *@Date 2024/5/20 16:35
  */

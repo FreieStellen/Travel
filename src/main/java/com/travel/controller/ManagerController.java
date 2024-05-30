@@ -3,8 +3,8 @@ package com.travel.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Manager;
-import com.travel.entity.vo.LoginByIdVo;
-import com.travel.entity.vo.LoginByPhoneVo;
+import com.travel.entity.dto.LoginByIdDto;
+import com.travel.entity.dto.LoginByPhoneDto;
 import com.travel.service.ManagerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +31,10 @@ public class ManagerController {
      */
 
     @PostMapping("/loginbyusername")
-    public ResponseResult<HashMap<String, String>> loginByUserName(@RequestBody LoginByIdVo loginByIdVo) {
+    public ResponseResult<HashMap<String, String>> loginByUserName(@RequestBody LoginByIdDto loginByIdDto) {
 
-        log.info(loginByIdVo.getPassword());
-        return managerService.loginByUserName(loginByIdVo);
+        log.info(loginByIdDto.getPassword());
+        return managerService.loginByUserName(loginByIdDto);
     }
 
     /**
@@ -44,7 +44,7 @@ public class ManagerController {
      */
 
     @PostMapping("/loginbyphone")
-    public ResponseResult<HashMap<String, Object>> loginByPhone(@RequestBody LoginByPhoneVo manager) {
+    public ResponseResult<HashMap<String, Object>> loginByPhone(@RequestBody LoginByPhoneDto manager) {
 
         return managerService.loginByPhone(manager);
     }

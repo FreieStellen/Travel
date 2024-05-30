@@ -1,4 +1,4 @@
-package com.travel.entity.vo;
+package com.travel.entity.dto;
 
 import com.travel.entity.User;
 import lombok.Data;
@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)//确保调用父类的equals()和hashCode()方法。
 @Data
-public class UserRegistVo extends User {
+public class UserRegistDto extends User {
 
     private String code;
 }

@@ -24,8 +24,9 @@ public abstract class RegexPatterns {
 
     public static final Pattern VERIFY_CODE_REGEX = Pattern.compile("\\d{6}");
     /**
-     * 密码正则, 大于6位且小于20位且必须包含其中两种（数字或字母或符号）
+     * 密码正则, 大于6位且小于20位且必须包含其中两种（数字或字母）
      */
 
-    public static final String PASSWORD_REGEX = "^(?=.*[0-9])(?=.*[a-zA-Z!@#$%^&*()-+=])(?=\\S+$).{6,20}$";
+    public static final Pattern PASSWORD_REGEX = Pattern.compile("^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,20}$");
+
 }

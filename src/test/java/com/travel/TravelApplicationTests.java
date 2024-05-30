@@ -1,17 +1,21 @@
 package com.travel;
 
-import com.travel.entity.Package;
+import com.travel.entity.User;
 import com.travel.mapper.PackageMapper;
 import com.travel.service.PackageService;
+import com.travel.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.math.BigDecimal;
+import javax.annotation.Resource;
 
 @SpringBootTest
 class TravelApplicationTests {
 
+
+    @Resource
+    private UserService userService;
     @Autowired
     private PackageService packageService;
 
@@ -25,19 +29,12 @@ class TravelApplicationTests {
 
     @Test
     public void TestBCryptPasswordEncoder() {
-        Package aPackage = new Package();
-    
-        aPackage.setCategoryId(1793079464066859010L);
-        aPackage.setName("吴寰宇徐扬套餐");
-        aPackage.setSpecial("sb");
-        aPackage.setGrade(BigDecimal.valueOf(2.0));
-        aPackage.setDiscribe("蠢");
-        aPackage.setTicketNum(20);
-        aPackage.setScore("4.5");
-        aPackage.setGradeDiscribe("....");
-
-        packageMapper.insert(aPackage);
-
+        User one =
+                userService.lambdaQuery()
+                        .eq(User::getAccountId, "邢哥肌肉大邢哥肌肉大")
+                        .eq(User::getStatus, 1)
+                        .one();
+        System.out.println(one);
     }
 
 }

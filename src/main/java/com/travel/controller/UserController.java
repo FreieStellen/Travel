@@ -1,9 +1,9 @@
 package com.travel.controller;
 
 import com.travel.common.ResponseResult;
-import com.travel.entity.vo.LoginByIdVo;
-import com.travel.entity.vo.LoginByPhoneVo;
-import com.travel.entity.vo.UserRegistVo;
+import com.travel.entity.dto.LoginByIdDto;
+import com.travel.entity.dto.LoginByPhoneDto;
+import com.travel.entity.dto.UserRegistDto;
 import com.travel.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ public class UserController {
      */
 
     @PostMapping("/loginbyusername")
-    public ResponseResult<HashMap<String, Object>> loginByUserName(@RequestBody LoginByIdVo user) {
+    public ResponseResult<HashMap<String, Object>> loginByUserName(@RequestBody LoginByIdDto user) {
 
         log.info("{}", user.toString());
         //登录
@@ -45,7 +45,7 @@ public class UserController {
      */
 
     @PostMapping("/loginbyphone")
-    public ResponseResult<HashMap<String, Object>> loginByPhone(@RequestBody LoginByPhoneVo user) {
+    public ResponseResult<HashMap<String, Object>> loginByPhone(@RequestBody LoginByPhoneDto user) {
 
         log.info("{}", user.toString());
         //登录
@@ -59,7 +59,7 @@ public class UserController {
      */
 
     @PostMapping("/regist")
-    public ResponseResult<String> regist(@RequestBody UserRegistVo user) {
+    public ResponseResult<String> regist(@RequestBody UserRegistDto user) {
         log.info(user.getAccountId());
         return userService.regist(user);
     }
@@ -77,7 +77,7 @@ public class UserController {
     }
 
     /**
-     * @Description: 回显登录
+     * @Description: 回显登录, 记住密码
      * @param: username
      * @date: 2024/5/22 16:48
      */

@@ -26,11 +26,6 @@ public class Package {
     private Long id;
 
     /**
-     * 分类id
-     */
-    private Long categoryId;
-
-    /**
      * 套餐名称
      */
     private String name;
@@ -63,6 +58,7 @@ public class Package {
     /**
      * 评分
      */
+    @TableField(exist = false)
     private String score;
 
     /**
@@ -72,7 +68,7 @@ public class Package {
 
 
     /**
-     * 状态 0存在，1删除
+     * 状态 0上架，1下架
      */
     private int status;
 

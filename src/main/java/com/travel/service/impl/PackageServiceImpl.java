@@ -1,5 +1,7 @@
 package com.travel.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Package;
@@ -143,4 +145,28 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
         }
         return ResponseResult.error("点赞收藏套餐操作失败！");
     }
+
+    /**
+     * @Description: 套餐分页查询
+     * @param: page, pageSize
+     * @date: 2024/5/23 15:25
+     */
+
+    @Override
+    public ResponseResult<Page<Package>> pagePackage(int current, int pageSize) {
+
+        //1.构造分页构造器
+        Page<Package> page = new Page<>(current, pageSize);
+
+        //2.构造条件构造器
+        LambdaQueryWrapper<Package> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Package::getStatus, 0).orderByDesc(Package::getCreateTime);
+
+        //3.分页查询
+        Page<Package> page1 = page(page, wrapper);
+
+        return ResponseResult.success(page1);
+    }
+
+
 }

@@ -8,12 +8,12 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /*
- *@ClassName Category 分类表
+ *@ClassName Category 地区表
  *@Author Freie  stellen
  *@Date 2024/5/20 16:27
  */
 @Data
-public class Category {
+public class District {
     //解决反序列化兼容问题
     private static final long serialVersionUID = 1L;
 

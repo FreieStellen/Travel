@@ -7,8 +7,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Manager;
-import com.travel.entity.vo.LoginByIdVo;
-import com.travel.entity.vo.LoginByPhoneVo;
+import com.travel.entity.dto.LoginByIdDto;
+import com.travel.entity.dto.LoginByPhoneDto;
 import com.travel.mapper.ManagerMapper;
 import com.travel.service.ManagerService;
 import com.travel.utils.*;
@@ -43,16 +43,16 @@ public class ManagerServiceImpl extends ServiceImpl<ManagerMapper, Manager> impl
      */
 
     @Override
-    public ResponseResult<HashMap<String, String>> loginByUserName(LoginByIdVo loginByIdVo) {
+    public ResponseResult<HashMap<String, String>> loginByUserName(LoginByIdDto loginByIdDto) {
 
         //拿到管理员密码
-        String password = loginByIdVo.getPassword();
+        String password = loginByIdDto.getPassword();
 
         //Lambda表达式查询
         LambdaQueryWrapper<Manager> lambdaQueryWrapper = new LambdaQueryWrapper<>();
 
         //根据账号(唯一)进行查询
-        lambdaQueryWrapper.eq(Manager::getAccount, loginByIdVo.getUsername());
+        lambdaQueryWrapper.eq(Manager::getAccount, loginByIdDto.getUsername());
 
         //查询管理员状态
         lambdaQueryWrapper.eq(Manager::getStatus, 1);
@@ -100,13 +100,13 @@ public class ManagerServiceImpl extends ServiceImpl<ManagerMapper, Manager> impl
      * @date: 2024/3/31 21:33
      */
     @Override
-    public ResponseResult<HashMap<String, Object>> loginByPhone(LoginByPhoneVo loginByPhoneVo) {
+    public ResponseResult<HashMap<String, Object>> loginByPhone(LoginByPhoneDto loginByPhoneDto) {
 
 
         //获取电话号码
-        String phone = loginByPhoneVo.getPhone();
+        String phone = loginByPhoneDto.getPhone();
         //获取验证码
-        String code = loginByPhoneVo.getCode();
+        String code = loginByPhoneDto.getCode();
 
         //判断电话号码是否为空
         if (StrUtil.isBlank(phone)) {

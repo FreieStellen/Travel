@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Slf4j
 @RestController
-@RequestMapping("/category")
+@RequestMapping("/district")
 public class DistrictController {
 
     @Autowired

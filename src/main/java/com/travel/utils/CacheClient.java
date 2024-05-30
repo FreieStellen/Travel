@@ -237,33 +237,42 @@ public class CacheClient {
         //2.3构建条件构造器
         LambdaQueryWrapper<UserCollect> lambdaQueryWrapper = new LambdaQueryWrapper<>();
 
+        //2.4判断是景点还是套餐
+        boolean over = type == Scency.class;
         if (score == null) {
             //3.如果未点赞，则可以点赞
             //3.1数据库中点赞数加1--->update
-            boolean update = (type == Scency.class) ?
+            boolean update = over ?
                     scencyService.update().setSql("liked = liked + 1").eq("id", id).update()
                     : packageService.update().setSql("liked = liked + 1").eq("id", id).update();
 
             //3.2用户收藏表中加入个人收藏--->save
             UserCollect userCollect = new UserCollect();
             userCollect.setUserId(Long.valueOf(userId));
-            userCollect.setCollectId(id);
-
+            if (over) {
+                userCollect.setScencyId(id);
+            } else {
+                userCollect.setPackageId(id);
+            }
             boolean save = userCollectService.save(userCollect);
             if (update && save) {
-                //3.2点赞加1后将数据存到redis中
+                //3.4点赞加1后将数据存到redis中
                 redisCache.add(key, userId, System.currentTimeMillis());
                 return true;
             }
         } else {
             //4.如果点过赞了，就取消点赞
             //4.1数据库中点赞数减1--->update
-            boolean update = (type == Scency.class) ?
+            boolean update = over ?
                     scencyService.update().setSql("liked = liked - 1").eq("id", id).update()
                     : packageService.update().setSql("liked = liked - 1").eq("id", id).update();
 
             //4.22用户收藏表中删除个人收藏--->remove
-            lambdaQueryWrapper.eq(UserCollect::getCollectId, id);
+            if (over) {
+                lambdaQueryWrapper.eq(UserCollect::getScencyId, id);
+            } else {
+                lambdaQueryWrapper.eq(UserCollect::getPackageId, id);
+            }
             boolean remove = userCollectService.remove(lambdaQueryWrapper);
             if (update && remove) {
                 //4.2点赞减一后删除redis中的缓存

@@ -1,4 +1,4 @@
-package com.travel.entity.vo;
+package com.travel.entity.dto;
 
 import lombok.Data;
 
@@ -8,7 +8,7 @@ import lombok.Data;
  *@Date 2024/3/31 21:13
  */
 @Data
-public class LoginByPhoneVo {
+public class LoginByPhoneDto {
 
     private String code;
     private String phone;

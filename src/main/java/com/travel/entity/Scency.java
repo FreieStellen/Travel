@@ -28,7 +28,7 @@ public class Scency {
     /**
      * 分类id
      */
-    private Long categoryId;
+    private Long districtId;
 
     /**
      * 景点名称
@@ -43,6 +43,7 @@ public class Scency {
     /**
      * 景点评分
      */
+    @TableField(exist = false)
     private String score;
 
     /**
@@ -76,14 +77,10 @@ public class Scency {
     private String openHours;
 
     /**
-     * 状态 0开放，1关闭
+     * 状态 0开放，1关闭,-1下架
      */
     private int status;
-
-    /**
-     * 状态 0存在，1删除
-     */
-    private int exist;
+    
 
     /**
      * 是否点赞

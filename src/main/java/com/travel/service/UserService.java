@@ -6,9 +6,8 @@ import com.travel.entity.User;
 import com.travel.entity.dto.LoginByIdDto;
 import com.travel.entity.dto.LoginByPhoneDto;
 import com.travel.entity.dto.UserRegistDto;
+import com.travel.entity.vo.LoginUserVo;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
 
 @Service
 public interface UserService extends IService<User> {
@@ -17,9 +16,9 @@ public interface UserService extends IService<User> {
 
     ResponseResult<Object> verifyUserName(String username);
 
-    ResponseResult<HashMap<String, Object>> loginByUserName(LoginByIdDto user);
+    ResponseResult<LoginUserVo> loginByUserName(LoginByIdDto user);
 
-    ResponseResult<HashMap<String, Object>> loginByPhone(LoginByPhoneDto loginByPhoneDto);
+    ResponseResult<LoginUserVo> loginByPhone(LoginByPhoneDto loginByPhoneDto);
 
     ResponseResult<String> echoLogin(String username);
 

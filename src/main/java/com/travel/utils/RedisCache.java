@@ -271,4 +271,24 @@ public class RedisCache {
     public boolean add(String key, String value, double score) {
         return stringRedisTemplate.opsForZSet().add(key, value, score);
     }
+
+    /**
+     * @Description: 更改hash表中的某个属性的值
+     * @param: key, field, newValue
+     * @date: 2024/6/1 16:35
+     */
+
+    public void updateHashDataValue(String key, String field, Object newValue) {
+        redisTemplate.opsForHash().put(key, field, newValue);
+    }
+
+    /**
+     * @Description: 使得hash表中某个字段自增
+     * @param: key, field, value
+     * @date: 2024/6/1 16:45
+     */
+
+    public void increment(String key, String field, int value) {
+        redisTemplate.opsForHash().increment(key, field, value);
+    }
 }

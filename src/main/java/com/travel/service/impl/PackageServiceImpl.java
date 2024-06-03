@@ -7,6 +7,7 @@ import com.travel.common.ResponseResult;
 import com.travel.entity.Package;
 import com.travel.entity.PackageScency;
 import com.travel.entity.dto.PackageDto;
+import com.travel.entity.vo.PopularVo;
 import com.travel.mapper.PackageMapper;
 import com.travel.service.PackageScencyService;
 import com.travel.service.PackageService;
@@ -62,13 +63,23 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
         //1.添加套餐
         boolean save = save(packageDto);
 
-        //2.判断是否添加成功
+        //1.1.判断是否添加成功
         if (!save) {
             return ResponseResult.error("添加套餐失败！");
         }
+
+        Long id = packageDto.getId();
+        //2.添加操作日志写入
+        log.info("添加了" + packageDto.getName() + "(" + id + ")");
+
+        //2.1添加日志内容
+        boolean record = cacheClient.record("添加了" + packageDto.getName() + "(" + id + ")");
+
+        if (!record) {
+            throw new RuntimeException("添加日志表失败！");
+        }
         //3.将套餐存入缓存中
         //3.1拼接key
-        Long id = packageDto.getId();
         String key = PACKAGE_CODE_KEY + id;
 
         //3.2存入redis中
@@ -82,7 +93,7 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
                 item.setPackageId(id)).collect(Collectors.toList());
 
         log.info("套餐关联表：{}", list);
-        //5.添加套餐——景点
+        //5.添加套餐——景点表
         boolean batch = packageScencyService.saveBatch(list);
 
         if (!batch) {
@@ -138,7 +149,7 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
     @Override
     public ResponseResult<String> likePackage(Long id) {
 
-        boolean like = cacheClient.like(PACKAGE_LIKED_KEY, id, Package.class);
+        boolean like = cacheClient.like(PACKAGE_LIKED_KEY, id, Package.class, PACKAGE_CODE_KEY);
 
         if (like) {
             return ResponseResult.success("点赞收藏套餐操作成功！");
@@ -168,5 +179,14 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
         return ResponseResult.success(page1);
     }
 
+    @Override
+    public ResponseResult<PopularVo> popular() {
+        PopularVo popular = cacheClient.popular(PACKAGE_POPULAR_KEY, Package.class);
 
+        if (Objects.isNull(popular)) {
+
+            return null;
+        }
+        return ResponseResult.success(popular);
+    }
 }

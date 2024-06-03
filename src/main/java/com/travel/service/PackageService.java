@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Package;
 import com.travel.entity.dto.PackageDto;
+import com.travel.entity.vo.PopularVo;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,4 +17,6 @@ public interface PackageService extends IService<Package> {
     ResponseResult<String> likePackage(Long id);
 
     ResponseResult<Page<Package>> pagePackage(int page, int pageSize);
+
+    ResponseResult<PopularVo> popular();
 }

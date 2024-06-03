@@ -2,6 +2,7 @@ package com.travel.controller;
 
 import com.travel.common.ResponseResult;
 import com.travel.entity.Scency;
+import com.travel.entity.vo.PopularVo;
 import com.travel.service.ScencyService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ public class ScencyController {
 
     @Autowired
     private ScencyService scencyService;
+
 
     /**
      * @Description: 添加景点
@@ -56,5 +58,15 @@ public class ScencyController {
     public ResponseResult<String> likeScency(@PathVariable Long id) {
         log.info("景点id：{}", id);
         return scencyService.likeScency(id);
+    }
+
+    /**
+     * @Description: 热门景点
+     * @date: 2024/6/3 15:59
+     */
+
+    @GetMapping("/popular")
+    public ResponseResult<PopularVo> popular() {
+        return scencyService.popular();
     }
 }

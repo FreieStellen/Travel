@@ -6,4 +6,5 @@ import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface RecordsMapper extends BaseMapper<Records> {
+
 }

@@ -9,6 +9,7 @@ import com.travel.entity.User;
 import com.travel.entity.dto.LoginByIdDto;
 import com.travel.entity.dto.LoginByPhoneDto;
 import com.travel.entity.dto.UserRegistDto;
+import com.travel.entity.vo.LoginUserVo;
 import com.travel.mapper.UserMapper;
 import com.travel.service.UserService;
 import com.travel.utils.*;
@@ -16,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -95,6 +95,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //2.1将密码进行加密处理
         String encode = PasswordEncoder.encode(password);
         userRegistDto.setPassword(encode);
+        userRegistDto.setAvatar("default.png");
 
         //3.添加用户
         boolean save = this.save(userRegistDto);
@@ -143,7 +144,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
 
     @Override
-    public ResponseResult<HashMap<String, Object>> loginByUserName(LoginByIdDto loginByIdDto) {
+    public ResponseResult<LoginUserVo> loginByUserName(LoginByIdDto loginByIdDto) {
 
         //1.检验数据
         String password = loginByIdDto.getPassword();
@@ -207,9 +208,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             redisCache.setCacheObject(upKey, password, USER_NAME_PASS_ECHO_TTL_DAYS, TimeUnit.DAYS);
         }
         //将jwt返回给前端
-        HashMap<String, Object> hashMap = new HashMap<>();
-        hashMap.put("token", jwt);
-        return ResponseResult.success(hashMap);
+        LoginUserVo userVo = new LoginUserVo();
+        userVo.setToken(jwt);
+        BeanUtil.copyProperties(one, userVo);
+        return ResponseResult.success(userVo);
     }
 
     /**
@@ -219,7 +221,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
 
     @Override
-    public ResponseResult<HashMap<String, Object>> loginByPhone(LoginByPhoneDto loginByPhoneDto) {
+    public ResponseResult<LoginUserVo> loginByPhone(LoginByPhoneDto loginByPhoneDto) {
 
         //获取电话号码
         String phone = loginByPhoneDto.getPhone();
@@ -291,12 +293,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //给用户信息设置在redis的过期时间
         redisCache.expire(key, LOGIN_CODE_TTL_MINUTES, TimeUnit.MINUTES);
 
-        //以键值对的形式将token返回给前端
-        HashMap<String, Object> map = new HashMap<>();
-        map.put("token", jwt);
-
-        //返回成功信息
-        return ResponseResult.success(map, "登陆成功");
+        LoginUserVo userVo = new LoginUserVo();
+        userVo.setToken(jwt);
+        BeanUtil.copyProperties(user, userVo);
+        return ResponseResult.success(userVo);
     }
 
     /**

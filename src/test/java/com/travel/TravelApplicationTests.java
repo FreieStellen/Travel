@@ -1,8 +1,11 @@
 package com.travel;
 
-import com.travel.entity.User;
+import cn.hutool.core.bean.BeanUtil;
+import com.travel.entity.Scency;
+import com.travel.entity.vo.PopularVo;
 import com.travel.mapper.PackageMapper;
 import com.travel.service.PackageService;
+import com.travel.service.ScencyService;
 import com.travel.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +25,9 @@ class TravelApplicationTests {
     @Autowired
     private PackageMapper packageMapper;
 
+    @Autowired
+    private ScencyService scencyService;
+
     @Test
     void contextLoads() {
 
@@ -29,12 +35,11 @@ class TravelApplicationTests {
 
     @Test
     public void TestBCryptPasswordEncoder() {
-        User one =
-                userService.lambdaQuery()
-                        .eq(User::getAccountId, "邢哥肌肉大邢哥肌肉大")
-                        .eq(User::getStatus, 1)
-                        .one();
-        System.out.println(one);
+
+        PopularVo popularVo = new PopularVo();
+        Scency scency = scencyService.lambdaQuery().orderByDesc(Scency::getLiked).last("LIMIT 1").one();
+        BeanUtil.copyProperties(scency, popularVo, false);
+        System.out.println(popularVo);
     }
 
 }

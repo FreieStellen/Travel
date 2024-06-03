@@ -8,11 +8,16 @@ import com.travel.utils.RegexUtil;
 import com.travel.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.travel.utils.RedisConstants.LOGIN_CODE_KEY;
@@ -30,6 +35,9 @@ public class CommonController {
 
     @Autowired
     private RedisCache redisCache;
+
+    @Value("${Travel.path}")
+    private String basePath;
 
     /**
      * @Description: 发送手机验证码(已测试)
@@ -92,4 +100,80 @@ public class CommonController {
         return ResponseResult.success("注销账户成功！");
     }
 
+    @PostMapping("/upload")
+    public ResponseResult<String> upload(@RequestParam(name = "file") MultipartFile files) {
+
+        //file是一个临时文件，需要转存到指定位置，否则本次请求完成后临时文件会删除
+        log.info("文件上传与下载：{}", files.toString());
+
+        //使用原始文件名
+        String originalFilename = files.getOriginalFilename();
+
+        //截取文件名后缀l.jpg
+
+        String suffix = null;
+        if (originalFilename != null) {
+
+            suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        //使用UUID重新生成文件名，防止文件名称重复造成文件覆盖
+        String fileName = UUID.randomUUID() + suffix;
+
+        //创建一个目录对象
+        File file = new File(basePath);
+
+        //判断当前对象是否存在
+        if (!file.exists()) {
+
+            //不存在则创建目录
+            file.mkdirs();
+        }
+        try {
+
+            //将临时文件转存到指定位置
+            files.transferTo(new File(basePath + fileName));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ResponseResult.success(fileName);
+    }
+
+    /**
+     * 文件的下载及回显
+     *
+     * @param: name, response
+     * @date: 2023/11/27 16:37
+     */
+
+    @GetMapping("/download")
+    public void download(String name, HttpServletResponse response) {
+
+        try {
+            //输入流，通过输入流来读取文件内容
+            FileInputStream fileInputStream = new FileInputStream(basePath + name);
+
+            //输出流。通过输出流将文件写回浏览器，在浏览器展示图片
+            ServletOutputStream outputStream = response.getOutputStream();
+
+            //设置下载文件类型
+            response.setContentType("image/jpeg");
+
+            int len;
+            byte[] bytes = new byte[1024];
+
+            while ((len = fileInputStream.read(bytes)) != -1) {
+
+                outputStream.write(bytes, 0, len);
+                outputStream.flush();
+            }
+
+            //关闭资源
+            outputStream.close();
+            fileInputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

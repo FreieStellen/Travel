@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Scency;
+import com.travel.entity.vo.PopularVo;
 import com.travel.mapper.ScencyMapper;
 import com.travel.service.ScencyService;
 import com.travel.service.UserCollectService;
@@ -44,26 +45,37 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
      * @param: scency
      * @date: 2024/5/13 19:46
      */
-
+    @Transactional
     @Override
     public ResponseResult<String> add(Scency scency) {
 
-        //管理员添加景点信息到数据库
+        //1.添加数据库
         boolean save = this.save(scency);
 
         if (!save) {
             return ResponseResult.error("添加失败！");
         }
 
-        //拿到景点id作为key存到redis中
         Long id = scency.getId();
+        //2.添加操作日志写入
+        log.info("添加了" + scency.getName() + "(" + id + ")");
+
+        //2.1添加日志内容
+        boolean record = cacheClient.record("添加了" + scency.getName() + "(" + id + ")");
+
+        if (!record) {
+            throw new RuntimeException("添加日志表失败！");
+        }
+
+        //3.添加缓存
+        //3.1拿到景点id作为key存到redis中
         String key = SCENCY_CODE_KEY + id;
 
-        //将景点对象转化为map对象
+        //3.2将景点对象转化为map对象
         Map<String, Object> map = BeanUtil.beanToMap(scency);
         log.info("景点集合:{}", map);
 
-        //将景点信息缓存到redis中
+        //3.3将景点信息缓存到redis中
         //缓存时间加上1-6的随机数解决缓存雪崩问题
         redisCache.setCacheMap(key, map);
         redisCache.expire(key, SCENCY_CODE_TTL_MINUTES, TimeUnit.MINUTES);
@@ -118,11 +130,30 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
     @Transactional
     @Override
     public ResponseResult<String> likeScency(Long id) {
-        boolean like = cacheClient.like(SCENCY_LIKED_KEY, id, Scency.class);
+        boolean like = cacheClient.like(SCENCY_LIKED_KEY, id, Scency.class, SCENCY_CODE_KEY);
 
         if (like) {
             return ResponseResult.success("点赞收藏景点操作成功！");
         }
         return ResponseResult.error("点赞收藏景点操作失败！");
     }
+
+    /**
+     * @Description: 热门景点
+     * @date: 2024/6/3 15:58
+     */
+
+    @Override
+    public ResponseResult<PopularVo> popular() {
+
+        PopularVo popular = cacheClient.popular(SCENCY_POPULAR_KEY, Scency.class);
+
+        if (Objects.isNull(popular)) {
+
+            return null;
+        }
+        return ResponseResult.success(popular);
+    }
+
+
 }

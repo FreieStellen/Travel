@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Package;
 import com.travel.entity.dto.PackageDto;
+import com.travel.entity.vo.PopularVo;
 import com.travel.service.PackageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,5 +70,10 @@ public class PackageController {
     @GetMapping("/page")
     public ResponseResult<Page<Package>> pagePackage(int current, int pageSize) {
         return packageService.pagePackage(current, pageSize);
+    }
+
+    @GetMapping("/popular")
+    public ResponseResult<PopularVo> popular() {
+        return packageService.popular();
     }
 }

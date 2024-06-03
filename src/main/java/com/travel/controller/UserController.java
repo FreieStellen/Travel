@@ -4,12 +4,11 @@ import com.travel.common.ResponseResult;
 import com.travel.entity.dto.LoginByIdDto;
 import com.travel.entity.dto.LoginByPhoneDto;
 import com.travel.entity.dto.UserRegistDto;
+import com.travel.entity.vo.LoginUserVo;
 import com.travel.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
 
 /*
  *@ClassName UserLogin 用户控制层
@@ -31,7 +30,7 @@ public class UserController {
      */
 
     @PostMapping("/loginbyusername")
-    public ResponseResult<HashMap<String, Object>> loginByUserName(@RequestBody LoginByIdDto user) {
+    public ResponseResult<LoginUserVo> loginByUserName(@RequestBody LoginByIdDto user) {
 
         log.info("{}", user.toString());
         //登录
@@ -45,7 +44,7 @@ public class UserController {
      */
 
     @PostMapping("/loginbyphone")
-    public ResponseResult<HashMap<String, Object>> loginByPhone(@RequestBody LoginByPhoneDto user) {
+    public ResponseResult<LoginUserVo> loginByPhone(@RequestBody LoginByPhoneDto user) {
 
         log.info("{}", user.toString());
         //登录

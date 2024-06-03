@@ -27,7 +27,7 @@ public class Records {
      * 管理员id
      */
     @TableField(fill = FieldFill.INSERT)
-    private Long managerId;
+    private String managerId;
 
     /**
      * 日志内容

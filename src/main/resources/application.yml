@@ -26,3 +26,5 @@ mybatis-plus:
     #关闭MybatisPlus的启动logo
   global-config:
     banner: false
+Travel:
+  path: D:\img\

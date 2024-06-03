@@ -32,6 +32,7 @@ public class MyMataObjectHandler implements MetaObjectHandler {
 
         this.setFieldValByName("createTime", LocalDateTime.now(), metaObject);
         this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
+        this.setFieldValByName("managerId", CommonHolder.getUser(), metaObject);
 
         log.info("--插入时字段--");
         log.info(metaObject.toString());
@@ -39,6 +40,6 @@ public class MyMataObjectHandler implements MetaObjectHandler {
 
     @Override
     public void updateFill(MetaObject metaObject) {
-        this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
+        this.setFieldValByName("upd0ateTime", LocalDateTime.now(), metaObject);
     }
 }

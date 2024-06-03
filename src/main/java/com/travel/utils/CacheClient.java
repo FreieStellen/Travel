@@ -4,11 +4,17 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.travel.common.CommonHolder;
+import com.travel.entity.Package;
+import com.travel.entity.Records;
 import com.travel.entity.Scency;
 import com.travel.entity.UserCollect;
+import com.travel.entity.vo.PopularVo;
 import com.travel.service.PackageService;
+import com.travel.service.RecordsService;
 import com.travel.service.ScencyService;
 import com.travel.service.UserCollectService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +22,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -47,21 +57,23 @@ public class CacheClient {
     @Autowired
     private UserCollectService userCollectService;
 
+    @Resource
+    private RecordsService recordsService;
 
-//    private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
+    private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
 
 
-//    //设置逻辑过期以redisData封装类的形式存入redis
-//    public void setWithLogicalExpire(String key, Object value, Long time, TimeUnit unit) {
-//        // 设置逻辑过期
-//        RedisData redisData = new RedisData();
-//        redisData.setData(value);
-//
-//        //设置逻辑过期时间
-//        redisData.setExpireTime(LocalDateTime.now().plusSeconds(unit.toSeconds(time)));
-//        // 写入Redis
-//        redisCache.setCacheObject(key, redisData);
-//    }
+    //设置逻辑过期以redisData封装类的形式存入redis（热门景点）
+    public void setWithLogicalExpire(String key, Object value, Long time, TimeUnit unit) {
+        // 设置逻辑过期
+        RedisData redisData = new RedisData();
+        redisData.setData(value);
+
+        //设置逻辑过期时间
+        redisData.setExpireTime(LocalDateTime.now().plusSeconds(unit.toSeconds(time)));
+        // 写入Redis
+        redisCache.setCacheObject(key, JSONUtil.toJsonStr(redisData));
+    }
 
     //解决缓存穿透和缓存击穿问题（使用互斥锁）
     public <R, ID> R queryWithPassThrough(
@@ -202,7 +214,6 @@ public class CacheClient {
         redisCache.deleteObject(key);
     }
 
-
     //是否点赞
     public <ID> Double isLike(String keyPrefix, ID id) {
         //1.首先拿到登录用户
@@ -222,17 +233,19 @@ public class CacheClient {
     }
 
     //点赞
-    public <R> boolean like(String keyPrefix, Long id, Class<R> type) {
+    public <R> boolean like(String keyPrefix1, Long id, Class<R> type, String keyPrefix2) {
 
         //1.首先拿到登录用户
         String userId = CommonHolder.getUser();
 
         //2.判断是否点赞过
         //2.1拼接点赞的key
-        String key = keyPrefix + id;
+        String key1 = keyPrefix1 + id;
+        //拼接景点信息key
+        String key2 = keyPrefix2 + id;
 
         //2.2去redis中获取点赞缓存
-        Double score = redisCache.score(key, userId);
+        Double score = redisCache.score(key1, userId);
 
         //2.3构建条件构造器
         LambdaQueryWrapper<UserCollect> lambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -257,7 +270,9 @@ public class CacheClient {
             boolean save = userCollectService.save(userCollect);
             if (update && save) {
                 //3.4点赞加1后将数据存到redis中
-                redisCache.add(key, userId, System.currentTimeMillis());
+                redisCache.add(key1, userId, System.currentTimeMillis());
+                //3.5更改存在redis中的景点信息点赞实现数据同步
+                redisCache.increment(key2, "liked", 1);
                 return true;
             }
         } else {
@@ -276,10 +291,113 @@ public class CacheClient {
             boolean remove = userCollectService.remove(lambdaQueryWrapper);
             if (update && remove) {
                 //4.2点赞减一后删除redis中的缓存
-                redisCache.remove(key, userId);
+                redisCache.remove(key1, userId);
+                //4.3更改存在redis中的景点信息点赞实现数据同步
+                redisCache.increment(key2, "liked", -1);
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * @Description: 写入日志
+     * * @date: 2024/5/30 19:59
+     */
+
+    public boolean record(String content) {
+
+        //1.写入日志
+        Records records = new Records();
+        records.setContent(content);
+
+        return recordsService.save(records);
+
+    }
+
+    //热门景点/套餐
+    public <R> PopularVo popular(String keyPrefix, Class<R> type) {
+
+        //1.去缓存中寻找热门景点
+        String json = redisCache.getCacheObject(keyPrefix);
+
+        PopularVo popularVo = new PopularVo();
+
+        //1.1判断类型
+        boolean flag = type == Scency.class;
+        //2.若缓存中没有热门景点
+        if (StrUtil.isBlank(json)) {
+            //2.1获取锁
+            try {
+                boolean isLock = tryLock(LOCK_CODE_POPULAR_KEY);
+
+                //2.2判断是否获取锁
+                if (!isLock) {
+                    //2.3获取锁失败休眠1秒再次调用
+                    log.info("没拿到锁，等待");
+                    Thread.sleep(1000);
+                    return popular(keyPrefix, type);
+                }
+                //2.3获取锁成功查询数据库并存到redis中
+                log.info("拿到锁");
+                return dbFallBack(flag, keyPrefix, popularVo);
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                //释放锁
+                unlock(LOCK_CODE_POPULAR_KEY);
+            }
+        }
+        //3.若缓存中有热门景点
+        RedisData redisData = JSONUtil.toBean(json, RedisData.class);
+        LocalDateTime expireTime = redisData.getExpireTime();
+        log.info("拿到的时间，{}", expireTime);
+        Object data = redisData.getData();
+        log.info("拿到的数据，{}", data);
+        R r = JSONUtil.toBean((JSONObject) data, type);
+        BeanUtil.copyProperties(r, popularVo, false);
+        //3.1判断逻辑时间是否过期
+        if (expireTime.isAfter(LocalDateTime.now())) {
+            //3.2未过期就转化对象并返回
+            log.info("数据没过期");
+            return popularVo;
+        }
+        //4.过期就重建缓存
+        //4.1获取锁
+        boolean isLock = tryLock(LOCK_CODE_POPULAR_KEY);
+        //4.2判断获取锁是否成功
+        if (isLock) {
+            //4.3获取成功开启独立线程
+            CACHE_REBUILD_EXECUTOR.submit(() -> {
+                try {
+                    //4.4查询数据库并存到redis中
+                    log.info("数据过期,拿到锁");
+                    dbFallBack(flag, keyPrefix, popularVo);
+                } catch (RuntimeException e) {
+                    e.printStackTrace();
+                } finally {
+                    //释放锁
+                    unlock(LOCK_CODE_POPULAR_KEY);
+                }
+            });
+        }
+        //获取锁失败且缓存过期返回旧数据
+        log.info("数据过期没拿到锁");
+        return popularVo;
+    }
+
+    //查询数据库并同步到redis中
+    public PopularVo dbFallBack(boolean flag, String keyPrefix, PopularVo popularVo) {
+        if (flag) {
+            Scency scency = scencyService.lambdaQuery().orderByDesc(Scency::getLiked).last("LIMIT 1").one();
+            BeanUtil.copyProperties(scency, popularVo, false);
+            setWithLogicalExpire(keyPrefix, scency, POPULAR_TTL_DAY, TimeUnit.DAYS);
+        } else {
+            Package aPackage = packageService.lambdaQuery().orderByDesc(Package::getLiked).last("LIMIT 1").one();
+            BeanUtil.copyProperties(aPackage, popularVo, false);
+            setWithLogicalExpire(keyPrefix, aPackage, POPULAR_TTL_DAY, TimeUnit.DAYS);
+        }
+        return popularVo;
     }
 }

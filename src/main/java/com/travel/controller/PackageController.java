@@ -5,10 +5,14 @@ import com.travel.common.ResponseResult;
 import com.travel.entity.Package;
 import com.travel.entity.dto.PackageDto;
 import com.travel.entity.vo.PopularVo;
+import com.travel.entity.vo.SelectRandomVo;
+import com.travel.entity.vo.ShowInfoVo;
 import com.travel.service.PackageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /*
  *@ClassName PackageController
@@ -43,9 +47,9 @@ public class PackageController {
      */
 
     @GetMapping("/select/{id}")
-    public ResponseResult<Package> selectPackageById(@PathVariable Long id) {
+    public ResponseResult<ShowInfoVo> selectPackageById(@PathVariable Long id) {
 
-        log.info("景点id为：{}", id);
+        log.info("套餐id为：{}", id);
         return packageService.selectPackageById(id);
     }
 
@@ -75,5 +79,16 @@ public class PackageController {
     @GetMapping("/popular")
     public ResponseResult<PopularVo> popular() {
         return packageService.popular();
+    }
+
+    /**
+     * @Description: 随机查询六个套餐
+     * @param:
+     * @date: 2024/6/10 20:02
+     */
+
+    @GetMapping("/selectrandom")
+    public ResponseResult<List<SelectRandomVo>> selectRandom() {
+        return packageService.selectRandom();
     }
 }

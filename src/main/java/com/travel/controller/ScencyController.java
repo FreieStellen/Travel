@@ -3,10 +3,14 @@ package com.travel.controller;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Scency;
 import com.travel.entity.vo.PopularVo;
+import com.travel.entity.vo.SelectRandomVo;
+import com.travel.entity.vo.ShowInfoVo;
 import com.travel.service.ScencyService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /*
  *@ClassName ScencyController 景点控制层
@@ -42,7 +46,7 @@ public class ScencyController {
      */
 
     @GetMapping("/select/{id}")
-    public ResponseResult<Scency> selectScencyById(@PathVariable Long id) {
+    public ResponseResult<ShowInfoVo> selectScencyById(@PathVariable Long id) {
 
         log.info("景点id为：{}", id);
         return scencyService.selectScencyById(id);
@@ -68,5 +72,16 @@ public class ScencyController {
     @GetMapping("/popular")
     public ResponseResult<PopularVo> popular() {
         return scencyService.popular();
+    }
+
+    /**
+     * @Description: 随机查询六个景点
+     * @param:
+     * @date: 2024/6/10 20:00
+     */
+
+    @GetMapping("/selectrandom")
+    public ResponseResult<List<SelectRandomVo>> selectRandom() {
+        return scencyService.selectRandom();
     }
 }

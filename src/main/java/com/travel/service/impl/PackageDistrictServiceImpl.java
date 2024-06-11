@@ -12,5 +12,8 @@ import org.springframework.stereotype.Service;
  *@Date 2024/5/28 17:27
  */
 @Service
-public class PackageDistrictServiceImpl extends ServiceImpl<PackageDistrictMapper, PackageDistrict> implements PackageDistrictService {
+public class PackageDistrictServiceImpl extends ServiceImpl<PackageDistrictMapper, PackageDistrict> implements
+        PackageDistrictService {
+
+
 }

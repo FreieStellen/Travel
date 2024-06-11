@@ -9,14 +9,9 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.travel.common.CommonHolder;
 import com.travel.entity.Package;
-import com.travel.entity.Records;
-import com.travel.entity.Scency;
-import com.travel.entity.UserCollect;
-import com.travel.entity.vo.PopularVo;
-import com.travel.service.PackageService;
-import com.travel.service.RecordsService;
-import com.travel.service.ScencyService;
-import com.travel.service.UserCollectService;
+import com.travel.entity.*;
+import com.travel.entity.vo.*;
+import com.travel.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -24,13 +19,12 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.travel.utils.RedisConstants.*;
 
@@ -60,10 +54,38 @@ public class CacheClient {
     @Resource
     private RecordsService recordsService;
 
+    @Resource
+    private DataBaseControl dataBaseControl;
+
+    @Lazy
+    @Resource
+    private DistrictService districtService;
+
+    @Lazy
+    @Resource
+    private ReviewService reviewService;
+
+    @Lazy
+    @Resource
+    private PackageDistrictService packageDistrictService;
+
+    @Lazy
+    @Resource
+    private UserService userService;
+
+
     private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
 
 
-    //设置逻辑过期以redisData封装类的形式存入redis（热门景点）
+    /**
+     * @Description: //设置逻辑过期以redisData封装类的形式存入redis（热门景点）
+     * @param: key
+     * value
+     * time
+     * unit
+     * @date: 2024/6/6 15:36
+     */
+
     public void setWithLogicalExpire(String key, Object value, Long time, TimeUnit unit) {
         // 设置逻辑过期
         RedisData redisData = new RedisData();
@@ -75,63 +97,97 @@ public class CacheClient {
         redisCache.setCacheObject(key, JSONUtil.toJsonStr(redisData));
     }
 
-    //解决缓存穿透和缓存击穿问题（使用互斥锁）
-    public <R, ID> R queryWithPassThrough(
+
+    /**
+     * @Description: 景点%套餐单个查询[解决缓存穿透和缓存击穿问题（使用互斥锁）]
+     * @param: keyPrefix, id, type, dbFallback, timeunit
+     * @date: 2024/6/6 15:35
+     */
+
+    public <R, ID> ShowInfoVo queryWithPassThrough(
             String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long time, TimeUnit unit) {
 
-        //拼接key
+        ShowInfoVo showInfoVo = new ShowInfoVo();
+        //1.查找缓存
+        //1.1拼接key
         String key = keyPrefix + id;
 
-        //首先去redis中查找缓存景点
+        boolean flag = type == Scency.class;
+
+        //1.2redis中查找缓存景点
         Map<String, Object> map = redisCache.getCacheMap(key);
 
-        //判断是否存在
+        ShowInfoVo back = null;
+        //1.3判断是否存在
         if (!map.isEmpty()) {
 
             if (map.size() == 1) {
-                log.info("查询");
+
                 return null;
             }
-            //存在就将map对象转为scency对象返回(isToCamelCase表示是否将 Map 中的下划线命名转换为驼峰命名
+            log.info("景点/套餐存在Redis中");
+            //1.4存在就将map对象转为scency对象返回(isToCamelCase表示是否将 Map 中的下划线命名转换为驼峰命名
             //CopyOptions.create()表示选择性拷贝属性)
             R r = BeanUtil.mapToBean(map, type, false, CopyOptions.create());
-
-            log.info("查询到:{}", r);
+            BeanUtil.copyProperties(r, showInfoVo);
+            //1.5添加数据到中间类
+            //1.6判断类型是否为景点或套餐
+            if (flag) {
+                String districtId = showInfoVo.getDistrictId().toString();
+                back = dbFallBack(districtId, showInfoVo, id.toString());
+            } else {
+                back = dbFallBack(showInfoVo, id.toString());
+            }
+            log.info("查询到:{}", back);
             //返回景点信息
-            return r;
+            return back;
         }
-        //拼接锁的key
+        //2.不存在就查询数据库
+        //2.1拼接锁的key
         String lockKey = LOCK_CODE_KEY + id;
-        R r = null;
+        R r;
         try {
-            //不存在去尝试获取锁
+            //2.2不存在去尝试获取锁
             boolean lock = tryLock(lockKey);
 
-            //判断是否获取锁
+            //2.3判断是否获取锁
             if (!lock) {
                 //没有获取就让线程等待
                 Thread.sleep(50);
                 //递归调用
                 return queryWithPassThrough(keyPrefix, id, type, dbFallback, time, unit);
             }
-            //获取成功后去查询数据库
+            //2.4获取成功后去查询数据库
             //apply方法可以接受一个泛型ID对象返回一个泛型R对象
             r = dbFallback.apply(id);
 
-            //判断拿到的对象是否为null
+            //3.判断拿到的对象是否为null
             if (Objects.isNull(r)) {
 
                 Map<String, String> hashMap = new HashMap<>();
                 hashMap.put("null", "");
-                //为null就在redis中储存空值并设置过期时间解决缓存穿透问题
+                //3.1为null就在redis中储存空值并设置过期时间解决缓存穿透问题
                 redisCache.setCacheMap(key, hashMap);
                 redisCache.expire(key, NULL_CODE_TTL_MINUTES, TimeUnit.MINUTES);
                 //返回不存在
                 return null;
             }
-            //不为null就返回并且同步数据到缓存中
+            log.info("景点/套餐不存在Redis中，拿到锁成功！");
+            //3.2不为null就返回并且同步数据到缓存中
+            BeanUtil.copyProperties(r, showInfoVo);
             Map<String, Object> map1 = BeanUtil.beanToMap(r);
 
+            log.info("swsw{}", showInfoVo);
+            //3.3判断类型是否为景点或套餐
+            if (flag) {
+                String districtId = showInfoVo.getDistrictId().toString();
+                back = dbFallBack(districtId, showInfoVo, id.toString());
+                log.info("拿到的景点类{}", back);
+            } else {
+                log.info("swswSSSSSSSSS{}", showInfoVo);
+                back = dbFallBack(showInfoVo, id.toString());
+                log.info("拿到的套餐类{}", back);
+            }
             redisCache.setCacheMap(key, map1);
             redisCache.expire(key, time, unit);
         } catch (InterruptedException e) {
@@ -140,81 +196,303 @@ public class CacheClient {
             //释放锁
             unlock(lockKey);
         }
-        return r;
+        return back;
     }
 
-//    //解决缓存击穿问题（设置逻辑过期时间）
-//    public <R, ID> R queryWithLogicalExpire(
-//            String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long time, TimeUnit unit) {
-//
-//        //拼接key
-//        String key = keyPrefix + id;
-//
-//        //首先去redis中查找缓存景点
-//        String json = redisCache.getCacheObject(key);
-//
-//        //判断是否存在
-//        if (json.isEmpty()) {
-//
-//            //不存在直接返回null（代表景点不是热点信息没存到redis中）
-//            return null;
-//        }
-//        //命中就将对象反序列化为redisData
-//        RedisData redisData = JSONUtil.toBean(json, RedisData.class);
-//
-//        //再将redisData中的data反序列化为需要的类型
-//        R r = JSONUtil.toBean((JSONObject) redisData.getData(), type);
-//        log.info("查询到:{}", r);
-//
-//        //拿到逻辑过期时间
-//        LocalDateTime expireTime = redisData.getExpireTime();
-//
-//        //判断是否过期
-//        if (expireTime.isAfter(LocalDateTime.now())) {
-//
-//            //未过期的话直接返回
-//            return r;
-//        }
-//        //过期需要重新重置逻辑过期时间
-//        //拼接互斥锁key
-//        String lockKey = LOCK_CODE_KEY + id;
-//
-//        //首先获得互斥锁
-//        boolean lock = tryLock(lockKey);
-//
-//        //判断是否获取互斥锁
-//        if (lock) {
-//            //拿到互斥锁开始重置逻辑过期时间
-//            //开启独立线程开始缓存重建
-//            CACHE_REBUILD_EXECUTOR.submit(() -> {
-//
-//                //查询数据库
-//                R apply = dbFallback.apply(id);
-//
-//                //建立缓存重建
-//                setWithLogicalExpire(key, apply, RedisConstants.SCENCY_CODE_TTL_MINUTES, TimeUnit.MINUTES);
-//
-//                //归还锁
-//                unlock(lockKey);
-//            });
-//        }
-//
-//        return queryWithLogicalExpire(keyPrefix, id, type, dbFallback, time, unit);
-//    }
+    /**
+     * @Description: 套餐数据渲染
+     * @param: null
+     * @date: 2024/6/8 17:13
+     */
+    public ShowInfoVo dbFallBack(ShowInfoVo showInfoVo, String packageId) {
+        //1查询地区名称--->套餐地区表  查询评论数--->评论表  查询评分--->评论表
+        //1.1缓存中查找地区是否存在
+        List<Object> redisDistrictName = redisCache.getCacheList(DISTRICT_CODE_KEY + packageId);
+        log.info("查询redis地区表(套餐地区)成功！{}", redisDistrictName);
+        //1.2缓存中查找对应套餐的评论数
+        Long num = redisCache.getCacheObject(REVIEW_NUM_KEY + packageId);
+        log.info("查询redis评论表(评论数)成功！{}", num);
+        //1.3缓存中查找对应套餐的评分
+        Double redisScore = redisCache.getCacheObject(PACKAGE_NUM_KEY + packageId);
+        log.info("查询redis评论表(评分)成功！{}", redisScore);
+        //1.4缓存中查找对应套餐的评论
+        List<ReviewVo> redisList = redisCache.getCacheList(REVIEW_CODE_KEY + packageId);
+        log.info("查询redis评论表(评论)成功！{}", redisList);
+        //1.5判断地区是否为空
+        if (!redisDistrictName.isEmpty()) {
+            log.info("套餐信息存在Redis中");
+            //1.5不为空则一一赋值
+            log.info("赋值中1");
+            showInfoVo.setDistrictList(redisDistrictName);
+            log.info("赋值中2");
+            showInfoVo.setReviewed(String.valueOf(num));
+            log.info("赋值中3");
+            showInfoVo.setScore(String.valueOf(redisScore));
+            log.info("赋值中4");
+            showInfoVo.setReviews(redisList);
+            log.info("赋值中5");
+            //返回
+            return showInfoVo;
+        }
+        //2.为空则加锁去数据库查询
+        try {
+            boolean lock = tryLock(LOCK_CODE_SHOWING_KEY);
+            //2.1判断加锁是否成功
+            if (!lock) {
+                //2.2拿锁失败就线程休眠1秒
+                Thread.sleep(1000);
+                return dbFallBack(showInfoVo, packageId);
+            }
+            //2.3拿锁成功去查询数据库
+            //2.3.1查询地区表(套餐地区)并加入缓存
+            log.info("套餐信息不存在Redis中，拿到锁成功！");
+            List<Object> districtList = packageDistrictService.listObjs(new LambdaQueryWrapper<PackageDistrict>()
+                            .eq(PackageDistrict::getPackageId, packageId)
+                            .select(PackageDistrict::getDistrictId))
+                    .stream().map(res ->
+                            districtService.listObjs(new LambdaQueryWrapper<District>()
+                                    .eq(District::getId, res).select(District::getName))
+                    ).collect(Collectors.toList());
+            String listDistrictKey = DISTRICT_CODE_KEY + packageId;
+            redisCache.setCacheList(listDistrictKey, districtList);
+            redisCache.expire(listDistrictKey, DISTRICT_TTL_DAYS, TimeUnit.DAYS);
+            log.info("查询地区表(套餐地区)成功！{}", districtList);
 
-    //获取互斥锁
+            //2.3.2查询评论表(评论数)并加入缓存
+            Long count = reviewService.lambdaQuery().eq(Review::getPackageId, packageId)
+                    .isNull(Review::getBelongId)
+                    .count();
+            redisCache.setCacheObject(REVIEW_NUM_KEY + packageId, count, REVIEW_TTL_DAYS, TimeUnit.DAYS);
+            log.info("查询评论表(评论数)成功！{}", count);
+
+            //2.3.3查询评论表(评论)并加入缓存
+            List<ReviewVo> collect = reviewService.lambdaQuery()
+                    .eq(Review::getPackageId, packageId)
+                    .isNull(Review::getBelongId)
+                    .list().stream().map(res ->
+                    {
+                        ReviewVo reviewVo = new ReviewVo();
+                        reviewVo.setId(res.getId());
+                        reviewVo.setContent(res.getContent());
+                        reviewVo.setScore(String.valueOf(res.getScore()));
+                        userService.lambdaQuery().eq(User::getId, res.getUserId()).list().forEach(var -> {
+                            //2.3.3.1需要封装vo将用户的账户和头像封装
+                            reviewVo.setName(var.getAccountId());
+                            reviewVo.setAvatar(var.getAvatar());
+                        });
+                        //2.3.3.2封装子评论
+                        List<RecoverVo> collect1 = reviewService.lambdaQuery()
+                                .eq(Review::getPackageId, packageId)
+                                .eq(Review::getScore, 0.0)
+                                .eq(Review::getBelongId, res.getId())
+                                .list().stream().map(jt -> {
+                                    RecoverVo recoverVo = new RecoverVo();
+                                    recoverVo.setContent(jt.getContent());
+                                    userService.lambdaQuery().eq(User::getId, jt.getUserId()).list().forEach(skt -> {
+                                        recoverVo.setName(skt.getAccountId());
+                                        recoverVo.setAvatar(skt.getAvatar());
+                                    });
+                                    return recoverVo;
+                                }).collect(Collectors.toList());
+                        reviewVo.setRecover(collect1);
+                        return reviewVo;
+                    })
+                    .collect(Collectors.toList());
+            String listReviewKey = REVIEW_CODE_KEY + packageId;
+            redisCache.setCacheList(listReviewKey, collect);
+            redisCache.expire(listReviewKey, REVIEW_TTL_DAYS, TimeUnit.DAYS);
+            log.info("查询评论表(评论)成功！{}", collect);
+
+            //2.3.4查询评论表(评分)并加入缓存
+            double average = reviewService.getBaseMapper().selectObjs(new LambdaQueryWrapper<Review>()
+                            .select(Review::getScore)
+                            .eq(Review::getPackageId, packageId)
+                            .isNull(Review::getBelongId))
+                    .stream().mapToDouble(res -> (float) res).average().orElse(0);
+            double score = (Math.round(average * 10));
+            score /= 10;
+            redisCache.setCacheObject(PACKAGE_NUM_KEY + packageId, score, REVIEW_TTL_DAYS, TimeUnit.DAYS);
+            log.info("查询评论表(评分)成功！{}", score);
+
+            if (!districtList.isEmpty()) {
+                log.info("赋值中1");
+                showInfoVo.setDistrictList(districtList);
+                log.info("赋值中2");
+                showInfoVo.setReviewed(String.valueOf(count));
+                log.info("赋值中3");
+                showInfoVo.setScore(String.valueOf(score));
+                log.info("赋值中4");
+                showInfoVo.setReviews(collect);
+                log.info("赋值中5");
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            //释放锁
+            unlock(LOCK_CODE_SHOWING_KEY);
+        }
+        //返回
+        log.info("返回{}", showInfoVo);
+        return showInfoVo;
+    }
+
+    /**
+     * @Description: 景点数据渲染
+     * @param: districtId, showInfoVo
+     * @date: 2024/6/8 0:31
+     */
+
+    public ShowInfoVo dbFallBack(String districtId, ShowInfoVo showInfoVo, String scencyId) {
+        //1查询地区名称--->地区表  查询评论数--->评论表  查询评分--->评论表
+        //1.1缓存中查找地区是否存在
+        String redisDistrictName = redisCache.getCacheObject(DISTRICT_CODE_KEY + scencyId);
+        log.info("查询redis地区表(景点地区)成功！{}", redisDistrictName);
+        //1.2缓存中查找对应景点或套餐的评论数
+        Long num = redisCache.getCacheObject(REVIEW_NUM_KEY + scencyId);
+        log.info("查询redis评论表(评论数)成功！{}", num);
+        //1.3缓存中查找对应景点或套餐的评分
+        Double redisScore = redisCache.getCacheObject(SCORE_NUM_KEY + scencyId);
+        log.info("查询redis评论表(评分)成功！{}", redisScore);
+        //1.4缓存中查找对应景点或套餐的评论
+        List<ReviewVo> redisList = redisCache.getCacheList(REVIEW_CODE_KEY + scencyId);
+        log.info("查询redis评论表(评论)成功！{}", redisList);
+        //1.5判断地区是否为空
+        if (StrUtil.isNotBlank(redisDistrictName)) {
+
+            log.info("景点信息存在Redis中");
+            //1.5不为空则一一赋值
+            log.info("赋值中1");
+            showInfoVo.setDistrict(redisDistrictName);
+            log.info("赋值中2");
+            showInfoVo.setReviewed(String.valueOf(num));
+            log.info("赋值中3");
+            showInfoVo.setScore(String.valueOf(redisScore));
+            log.info("赋值中4");
+            showInfoVo.setReviews(redisList);
+            log.info("赋值中5");
+            //返回
+            return showInfoVo;
+        }
+        //2.为空则加锁去数据库查询
+        try {
+            boolean lock = tryLock(LOCK_CODE_SHOWING_KEY);
+            //2.1判断加锁是否成功
+            if (!lock) {
+                //2.2拿锁失败就线程休眠1秒
+                Thread.sleep(1000);
+                return dbFallBack(districtId, showInfoVo, scencyId);
+            }
+            //2.3拿锁成功去查询数据库
+            //2.3.1查询地区表(景点地区)并加入缓存
+
+            log.info("景点信息不存在Redis中，拿到锁成功！");
+            District one = districtService.lambdaQuery().eq(District::getId, districtId).one();
+            String districtName = one.getName();
+            redisCache.setCacheObject(DISTRICT_CODE_KEY + scencyId, districtName, DISTRICT_TTL_DAYS, TimeUnit.DAYS);
+            log.info("查询地区表(景点地区)成功！{}", districtName);
+
+            //2.3.2查询评论表(评论数)并加入缓存
+            Long count = reviewService.lambdaQuery().eq(Review::getScencyId, scencyId).isNull(Review::getBelongId).count();
+            redisCache.setCacheObject(REVIEW_NUM_KEY + scencyId, count, REVIEW_TTL_DAYS, TimeUnit.DAYS);
+            log.info("查询评论表(评论数)成功！{}", count);
+
+            //2.3.3查询评论表(评论)并加入缓存
+            List<ReviewVo> collect = reviewService.lambdaQuery()
+                    .eq(Review::getScencyId, scencyId)
+                    .isNull(Review::getBelongId)
+                    .list().stream().map(res ->
+                    {
+                        ReviewVo reviewVo = new ReviewVo();
+                        reviewVo.setId(res.getId());
+                        reviewVo.setContent(res.getContent());
+                        reviewVo.setScore(String.valueOf(res.getScore()));
+                        userService.lambdaQuery().eq(User::getId, res.getUserId()).list().forEach(var -> {
+                            //2.3.3.1需要封装vo将用户的账户和头像封装
+                            reviewVo.setName(var.getAccountId());
+                            reviewVo.setAvatar(var.getAvatar());
+                        });
+                        //2.3.3.2封装子评论
+                        List<RecoverVo> collect1 = reviewService.lambdaQuery()
+                                .eq(Review::getScencyId, scencyId).isNull(Review::getScore)
+                                .eq(Review::getBelongId, res.getId())
+                                .list().stream().map(jt -> {
+                                    RecoverVo recoverVo = new RecoverVo();
+                                    recoverVo.setContent(jt.getContent());
+                                    userService.lambdaQuery().eq(User::getId, jt.getUserId()).list().forEach(skt -> {
+                                        recoverVo.setName(skt.getAccountId());
+                                        recoverVo.setAvatar(skt.getAvatar());
+                                    });
+                                    return recoverVo;
+                                }).collect(Collectors.toList());
+                        reviewVo.setRecover(collect1);
+                        return reviewVo;
+                    })
+                    .collect(Collectors.toList());
+            String listReviewKey = REVIEW_CODE_KEY + scencyId;
+            redisCache.setCacheList(listReviewKey, collect);
+            redisCache.expire(listReviewKey, REVIEW_TTL_DAYS, TimeUnit.DAYS);
+            log.info("查询评论表(评论)成功！{}", collect);
+
+            //2.3.4查询评论表(评分)并加入缓存
+            double average = reviewService.getBaseMapper().selectObjs(new LambdaQueryWrapper<Review>()
+                            .select(Review::getScore)
+                            .eq(Review::getScencyId, scencyId)
+                            .isNull(Review::getBelongId))
+                    .stream().mapToDouble(res -> (float) res).average().orElse(0);
+            double score = (Math.round(average * 10));
+            score /= 10;
+            redisCache.setCacheObject(SCORE_NUM_KEY + scencyId, score, REVIEW_TTL_DAYS, TimeUnit.DAYS);
+            log.info("查询评论表(评分)成功！{}", score);
+
+            if (StrUtil.isNotBlank(districtName)) {
+                log.info("赋值中1");
+                showInfoVo.setDistrict(districtName);
+                log.info("赋值中2");
+                showInfoVo.setReviewed(String.valueOf(count));
+                log.info("赋值中3");
+                showInfoVo.setScore(String.valueOf(score));
+                log.info("赋值中4");
+                showInfoVo.setReviews(collect);
+                log.info("赋值中5");
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            //释放锁
+            unlock(LOCK_CODE_SHOWING_KEY);
+        }
+        //返回
+        log.info("返回{}", showInfoVo);
+        return showInfoVo;
+    }
+
+    /**
+     * @Description: 获取互斥锁
+     * @param: key
+     * @date: 2024/6/6 15:36
+     */
     private boolean tryLock(String key) {
         boolean flag = redisCache.lock(key, "1", LOCK_CODE_TTL_SECONDS, TimeUnit.SECONDS);
         return BooleanUtil.isTrue(flag);
     }
 
-    //释放互斥锁
+    /**
+     * @Description: 释放互斥锁
+     * @param: key
+     * @date: 2024/6/6 15:36
+     */
     private void unlock(String key) {
 
         redisCache.deleteObject(key);
     }
 
-    //是否点赞
+    /**
+     * @Description: 景点%套餐是否点赞
+     * @param: keyPrefix
+     * id
+     * @date: 2024/6/6 15:36
+     */
+
     public <ID> Double isLike(String keyPrefix, ID id) {
         //1.首先拿到登录用户
         String userId = CommonHolder.getUser();
@@ -232,7 +510,15 @@ public class CacheClient {
         return score;
     }
 
-    //点赞
+    /**
+     * @Description: 景点%套餐点赞
+     * @param: keyPrefix1
+     * id
+     * type
+     * keyPrefix2
+     * @date: 2024/6/6 15:37
+     */
+
     public <R> boolean like(String keyPrefix1, Long id, Class<R> type, String keyPrefix2) {
 
         //1.首先拿到登录用户
@@ -272,7 +558,7 @@ public class CacheClient {
                 //3.4点赞加1后将数据存到redis中
                 redisCache.add(key1, userId, System.currentTimeMillis());
                 //3.5更改存在redis中的景点信息点赞实现数据同步
-                redisCache.increment(key2, "liked", 1);
+                redisCache.incrementHash(key2, "liked", 1);
                 return true;
             }
         } else {
@@ -293,7 +579,7 @@ public class CacheClient {
                 //4.2点赞减一后删除redis中的缓存
                 redisCache.remove(key1, userId);
                 //4.3更改存在redis中的景点信息点赞实现数据同步
-                redisCache.increment(key2, "liked", -1);
+                redisCache.incrementHash(key2, "liked", -1);
                 return true;
             }
         }
@@ -315,7 +601,13 @@ public class CacheClient {
 
     }
 
-    //热门景点/套餐
+    /**
+     * @Description: 热门景点%套餐
+     * @param: keyPrefix
+     * type
+     * @date: 2024/6/6 15:38
+     */
+
     public <R> PopularVo popular(String keyPrefix, Class<R> type) {
 
         //1.去缓存中寻找热门景点
@@ -387,7 +679,14 @@ public class CacheClient {
         return popularVo;
     }
 
-    //查询数据库并同步到redis中
+    /**
+     * @Description: 热门景点%套餐数据渲染
+     * @param: flag
+     * keyPrefix
+     * popularVo
+     * @date: 2024/6/7 14:21
+     */
+
     public PopularVo dbFallBack(boolean flag, String keyPrefix, PopularVo popularVo) {
         if (flag) {
             Scency scency = scencyService.lambdaQuery().orderByDesc(Scency::getLiked).last("LIMIT 1").one();
@@ -396,8 +695,163 @@ public class CacheClient {
         } else {
             Package aPackage = packageService.lambdaQuery().orderByDesc(Package::getLiked).last("LIMIT 1").one();
             BeanUtil.copyProperties(aPackage, popularVo, false);
+            StringBuilder stringBuilder = new StringBuilder();
+            packageDistrictService.lambdaQuery().eq(PackageDistrict::getPackageId, aPackage.getId())
+                    .list().forEach(var -> {
+                        List<String> list = districtService
+                                .listObjs(new LambdaQueryWrapper<District>()
+                                        .eq(District::getId, var.getDistrictId())
+                                        .select(District::getName));
+                        for (String jt : list) {
+                            stringBuilder.append(jt).append("-");
+                        }
+                        String value = String.valueOf(stringBuilder);
+                        String substring = value.substring(0, value.length() - 1);
+                        popularVo.setAddress(substring);
+                    });
             setWithLogicalExpire(keyPrefix, aPackage, POPULAR_TTL_DAY, TimeUnit.DAYS);
         }
         return popularVo;
+    }
+
+    /**
+     * @Description: 查询地区
+     * @param:
+     * @date: 2024/6/7 14:19
+     */
+
+    public List<District> selectDisAll() {
+
+        //1.从缓存中查找地区
+        Map<String, District> map = redisCache.getCacheMap(DISTRICT_CODE_KEY);
+        List<District> list = null;
+        //1.1判断是否存在
+        if (!map.isEmpty()) {
+            //1.2存在就遍历集合返回需要的数据
+            list = new ArrayList<>();
+            for (Map.Entry<String, District> entry : map.entrySet()) {
+                District district = entry.getValue();
+                list.add(district);
+            }
+            log.info("拿到的集合为：{}", list);
+            return list;
+        }
+        try {
+            //2不存在就获取互斥锁
+            boolean lock = tryLock(LOCK_CODE_DISTRICT_KEY);
+
+            //2.1判断获取锁是否成功
+
+            if (!lock) {
+                //2.2获取锁失败就让线程等待
+                log.info("获取锁失败");
+                Thread.sleep(1000);
+                return selectDisAll();
+            }
+            log.info("获取锁成功");
+            //2.3获取锁成功去查询数据库
+            list = dataBaseControl.selectDisAll();
+            log.info("列表为,{}", list);
+            //2.4同步数据到缓存中
+            HashMap<String, District> hashMap = new HashMap<>();
+            for (District district : list) {
+                String id = district.getId().toString();
+                log.info("拿到的id,{}", id);
+                //2.5自定义map集合
+                hashMap.put(id, district);
+                String key = DISTRICT_CODE_KEY;
+                log.info("集合为,{}", hashMap.size());
+                //2.6存到缓存中并设置过期时间
+                redisCache.setCacheMap(key, hashMap);
+                redisCache.expire(key, DISTRICT_TTL_DAYS, TimeUnit.DAYS);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            //释放锁
+            unlock(LOCK_CODE_DISTRICT_KEY);
+        }
+        return list;
+    }
+
+    /**
+     * @Description: 随机六个景点%套餐
+     * @param:
+     * @date: 2024/6/10 15:27
+     */
+
+    public <R> List<SelectRandomVo> selectRandom(String keyPrefix, Class<R> type) {
+        //1.去缓存中寻找热门景点
+        List<SelectRandomVo> redisList = redisCache.getCacheList(keyPrefix);
+        //1.1判断类型
+        boolean flag = type == Scency.class;
+        //1.2判断集合是否为空
+        if (!redisList.isEmpty()) {
+            //1.2.1不为空则返回
+            return redisList;
+        }
+        List<SelectRandomVo> list = null;
+        try {
+            //2.为空则加锁
+            boolean lock = tryLock(LOCK_CODE_SELECTRANDOM_KEY);
+            //2.1判断获取锁是否成功
+            if (!lock) {
+                //2.2获取锁失败休眠1秒再次调用
+                log.info("没拿到锁，等待");
+                Thread.sleep(1000);
+                return selectRandom(keyPrefix, type);
+            }
+            //2.3获取锁成功查询数据库并存到redis中
+            log.info("拿到锁");
+            if (flag) {
+                list = scencyService.lambdaQuery().orderByDesc(Scency::getUpdateTime)
+                        .last("LIMIT 6").list()
+                        .stream().map(res -> {
+                            SelectRandomVo selectRandomVo = new SelectRandomVo();
+                            selectRandomVo.setId(res.getId().toString());
+                            selectRandomVo.setName(res.getName());
+                            selectRandomVo.setImage(res.getImage());
+
+                            double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
+                                            .eq(Review::getScencyId, res.getId())
+                                            .isNull(Review::getBelongId)
+                                            .select(Review::getScore))
+                                    .stream().mapToDouble(var -> (float) var).average().orElse(0);
+
+                            double score = (Math.round(average * 10));
+                            score /= 10;
+                            selectRandomVo.setScore(score);
+                            return selectRandomVo;
+                        }).collect(Collectors.toList());
+            } else {
+                list = packageService.lambdaQuery().orderByDesc(Package::getUpdateTime)
+                        .last("LIMIT 6").list()
+                        .stream().map(res -> {
+
+                            SelectRandomVo selectRandomVo = new SelectRandomVo();
+                            selectRandomVo.setId(res.getId().toString());
+                            selectRandomVo.setImage(res.getImage());
+                            selectRandomVo.setName(res.getName());
+                            double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
+                                            .eq(Review::getPackageId, res.getId())
+                                            .isNull(Review::getBelongId)
+                                            .select(Review::getScore))
+                                    .stream().mapToDouble(var -> (float) var).average().orElse(0);
+
+                            double score = (Math.round(average * 10));
+                            score /= 10;
+                            selectRandomVo.setScore(score);
+                            return selectRandomVo;
+                        }).collect(Collectors.toList());
+            }
+            redisCache.setCacheList(keyPrefix, list);
+            redisCache.expire(keyPrefix, SELECTRANDOM_TTL_DAY, TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            //释放锁
+            unlock(LOCK_CODE_SELECTRANDOM_KEY);
+        }
+        return list;
     }
 }

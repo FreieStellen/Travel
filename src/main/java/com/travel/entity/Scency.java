@@ -67,9 +67,14 @@ public class Scency {
     private String images;
 
     /**
+     * 展示图片
+     */
+    private String image;
+
+    /**
      * 景点描述
      */
-    private String discribe;
+    private String description;
 
     /**
      * 开放时间
@@ -80,7 +85,7 @@ public class Scency {
      * 状态 0开放，1关闭,-1下架
      */
     private int status;
-    
+
 
     /**
      * 是否点赞

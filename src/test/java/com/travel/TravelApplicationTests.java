@@ -1,17 +1,21 @@
 package com.travel;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.travel.entity.Scency;
-import com.travel.entity.vo.PopularVo;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.travel.entity.Package;
+import com.travel.entity.Review;
+import com.travel.entity.vo.SelectRandomVo;
+import com.travel.mapper.DistrictMapper;
+import com.travel.mapper.PackageDistrictMapper;
 import com.travel.mapper.PackageMapper;
-import com.travel.service.PackageService;
-import com.travel.service.ScencyService;
-import com.travel.service.UserService;
+import com.travel.service.*;
+import com.travel.utils.RedisCache;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 class TravelApplicationTests {
@@ -28,6 +32,23 @@ class TravelApplicationTests {
     @Autowired
     private ScencyService scencyService;
 
+    @Autowired
+    private RedisCache redisCache;
+
+    @Resource
+    private DistrictService districtService;
+
+    @Resource
+    private ReviewService reviewService;
+
+    @Resource
+    private DistrictMapper districtMapper;
+    @Resource
+    private PackageDistrictMapper packageDistrictMapper;
+
+    @Resource
+    private PackageDistrictService packageDistrictService;
+
     @Test
     void contextLoads() {
 
@@ -36,10 +57,26 @@ class TravelApplicationTests {
     @Test
     public void TestBCryptPasswordEncoder() {
 
-        PopularVo popularVo = new PopularVo();
-        Scency scency = scencyService.lambdaQuery().orderByDesc(Scency::getLiked).last("LIMIT 1").one();
-        BeanUtil.copyProperties(scency, popularVo, false);
-        System.out.println(popularVo);
+        List<SelectRandomVo> list = packageService.lambdaQuery().orderByDesc(Package::getUpdateTime)
+                .last("LIMIT 6").list()
+                .stream().map(res -> {
+
+                    SelectRandomVo selectRandomVo = new SelectRandomVo();
+                    selectRandomVo.setId(res.getId().toString());
+                    selectRandomVo.setImage(res.getImage());
+                    selectRandomVo.setName(res.getName());
+                    double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
+                                    .eq(Review::getPackageId, res.getId())
+                                    .isNull(Review::getBelongId)
+                                    .select(Review::getScore))
+                            .stream().mapToDouble(var -> (float) var).average().orElse(0);
+
+                    double score = (Math.round(average * 10));
+                    score /= 10;
+                    selectRandomVo.setScore(score);
+                    return selectRandomVo;
+                }).collect(Collectors.toList());
+        System.out.println(list);
     }
 
 }

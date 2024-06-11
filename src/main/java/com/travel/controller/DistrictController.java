@@ -1,12 +1,13 @@
 package com.travel.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.travel.common.ResponseResult;
 import com.travel.entity.District;
 import com.travel.service.DistrictService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /*
  *@ClassName CategoryController 分类控制层
@@ -41,7 +42,7 @@ public class DistrictController {
      */
 
     @GetMapping("/list")
-    public ResponseResult<Page<District>> selectList() {
+    public ResponseResult<List<District>> selectList() {
         return districtService.selectList();
     }
 }

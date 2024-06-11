@@ -154,12 +154,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //1.1校验密码是否有效
         if (!RegexUtil.isPasswordInvalid(password)) {
 
+            log.info("密码校验失败！");
             //如果无效就返回
             return ResponseResult.error("系统异常，请重新操作...");
         }
         //1.2校验用户名是否有效
         if (!RegexUtil.isUsernameInvalid(username)) {
 
+            log.info("用户名校验失败！");
             //如果无效就返回
             return ResponseResult.error("系统异常，请重新操作...");
         }
@@ -319,6 +321,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return null;
         }
         return ResponseResult.success(password);
+    }
+
+    /**
+     * @Description: 根据id查询
+     * @param: id, username
+     * @date: 2024/6/3 23:13
+     */
+
+    @Override
+    public ResponseResult<User> SelectById(Long id, String username) {
+
+        User user = lambdaQuery().eq(User::getId, id).eq(User::getAccountId, username).one();
+
+        if (Objects.isNull(user)) {
+            return null;
+        }
+        return ResponseResult.success(user);
     }
 
 }

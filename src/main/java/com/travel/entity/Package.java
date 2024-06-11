@@ -43,7 +43,17 @@ public class Package {
     /**
      * 套餐描述
      */
-    private String discribe;
+    private String description;
+
+    /**
+     * 套餐图片
+     */
+    private String images;
+
+    /**
+     * 展示图片
+     */
+    private String image;
 
     /**
      * 套餐数量
@@ -81,7 +91,7 @@ public class Package {
     /**
      * 出发时间
      */
-    private LocalDateTime predetermineTime;
+    private String predetermineTime;
     /**
      * 创建时间
      */

@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Scency;
 import com.travel.entity.vo.PopularVo;
+import com.travel.entity.vo.SelectRandomVo;
+import com.travel.entity.vo.ShowInfoVo;
 import com.travel.mapper.ScencyMapper;
 import com.travel.service.ScencyService;
 import com.travel.service.UserCollectService;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -90,21 +93,21 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
      */
 
     @Override
-    public ResponseResult<Scency> selectScencyById(Long id) {
+    public ResponseResult<ShowInfoVo> selectScencyById(Long id) {
 
         //解决缓存穿透问题
-        Scency scency = cacheClient
+        ShowInfoVo showInfoVo = cacheClient
                 .queryWithPassThrough(SCENCY_CODE_KEY, id, Scency.class, this::getById, SCENCY_CODE_TTL_MINUTES, TimeUnit.MINUTES);
 
 
-        if (Objects.isNull(scency)) {
+        if (Objects.isNull(showInfoVo)) {
             return ResponseResult.error("获取失败");
         }
 
         //判断是否点赞
-        isLike(scency);
-        log.info("拿到的景点：{}", scency);
-        return ResponseResult.success(scency);
+        isLike(showInfoVo);
+        log.info("拿到的景点：{}", showInfoVo);
+        return ResponseResult.success(showInfoVo);
     }
 
     /**
@@ -113,12 +116,12 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
      * @date: 2024/5/20 11:59
      */
 
-    public void isLike(Scency scency) {
+    public void isLike(ShowInfoVo showInfoVo) {
 
-        Double like = cacheClient.isLike(SCENCY_LIKED_KEY, scency.getId());
-        scency.setLike(like != null);
+        Double like = cacheClient.isLike(SCENCY_LIKED_KEY, showInfoVo.getId());
+        showInfoVo.setLike(like != null);
 
-        log.info("拿到景点：{}", scency);
+        log.info("拿到景点：{}", showInfoVo);
     }
 
     /**
@@ -153,6 +156,17 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
             return null;
         }
         return ResponseResult.success(popular);
+    }
+
+    @Override
+    public ResponseResult<List<SelectRandomVo>> selectRandom() {
+
+        List<SelectRandomVo> list = cacheClient.selectRandom(SCENCY_SELECTRANDOM_KEY, Scency.class);
+
+        if (list.isEmpty()) {
+            return null;
+        }
+        return ResponseResult.success(list);
     }
 
 

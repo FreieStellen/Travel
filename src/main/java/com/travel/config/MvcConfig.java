@@ -35,7 +35,9 @@ public class MvcConfig implements WebMvcConfigurer {
                         "/scency/**",
                         "/category/**",
                         "/package/**",
-                        "/order/**"
+                        "/order/**",
+                        "/district/**",
+                        "/review/**"
                 ).order(1);//拦截器拦截顺序，默认的拦截顺序是都是0
         registry.addInterceptor(new CommonLoginInterceptor(redisCache)).order(0);
     }

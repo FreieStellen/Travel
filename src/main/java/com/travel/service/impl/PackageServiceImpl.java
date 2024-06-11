@@ -8,6 +8,8 @@ import com.travel.entity.Package;
 import com.travel.entity.PackageScency;
 import com.travel.entity.dto.PackageDto;
 import com.travel.entity.vo.PopularVo;
+import com.travel.entity.vo.SelectRandomVo;
+import com.travel.entity.vo.ShowInfoVo;
 import com.travel.mapper.PackageMapper;
 import com.travel.service.PackageScencyService;
 import com.travel.service.PackageService;
@@ -110,19 +112,19 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
      */
 
     @Override
-    public ResponseResult<Package> selectPackageById(Long id) {
+    public ResponseResult<ShowInfoVo> selectPackageById(Long id) {
 
         //查询套餐
-        Package aPackage = cacheClient
+        ShowInfoVo showInfoVo = cacheClient
                 .queryWithPassThrough(PACKAGE_CODE_KEY, id, Package.class, this::getById, PACKAGE_CODE_TTL_MINUTES, TimeUnit.MINUTES);
 
-        if (Objects.isNull(aPackage)) {
+        if (Objects.isNull(showInfoVo)) {
             return ResponseResult.error("获取失败！");
         }
 
         //判断是否点赞
-        isLike(aPackage);
-        return ResponseResult.success(aPackage);
+        isLike(showInfoVo);
+        return ResponseResult.success(showInfoVo);
     }
 
     /**
@@ -131,12 +133,12 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
      * @date: 2024/5/23 14:22
      */
 
-    public void isLike(Package apackage) {
+    public void isLike(ShowInfoVo showInfoVo) {
 
-        Double like = cacheClient.isLike(PACKAGE_LIKED_KEY, apackage.getId());
-        apackage.setLike(like != null);
+        Double like = cacheClient.isLike(PACKAGE_LIKED_KEY, showInfoVo.getId());
+        showInfoVo.setLike(like != null);
 
-        log.info("拿到套餐：{}", apackage);
+        log.info("拿到套餐：{}", showInfoVo);
     }
 
     /**
@@ -188,5 +190,15 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
             return null;
         }
         return ResponseResult.success(popular);
+    }
+
+    @Override
+    public ResponseResult<List<SelectRandomVo>> selectRandom() {
+        List<SelectRandomVo> list = cacheClient.selectRandom(PACKAGE_SELECTRANDOM_KEY, Package.class);
+
+        if (list.isEmpty()) {
+            return null;
+        }
+        return ResponseResult.success(list);
     }
 }

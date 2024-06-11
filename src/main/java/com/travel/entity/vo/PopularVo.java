@@ -13,8 +13,7 @@ public class PopularVo {
     private Long id;
     private String name;
     private String address;
-    private String discribe;
+    private String description;
     private String image;
     private int liked;
-
 }

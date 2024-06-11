@@ -288,7 +288,28 @@ public class RedisCache {
      * @date: 2024/6/1 16:45
      */
 
-    public void increment(String key, String field, int value) {
+    public void incrementHash(String key, String field, int value) {
         redisTemplate.opsForHash().increment(key, field, value);
+    }
+
+    /**
+     * @Description: 获取Hash集合中某个字段值
+     * @param: key hkey
+     * @date: 2024/5/19 11:33
+     */
+
+    public Object HashGet(String key, String hkey) {
+
+        return redisTemplate.opsForHash().get(key, hkey);
+    }
+
+    /**
+     * @Description: 使得string字段自增
+     * @param: key
+     * @date: 2024/6/1 16:45
+     */
+
+    public void incrementString(String key) {
+        redisTemplate.opsForValue().increment(key);
     }
 }

@@ -22,4 +22,6 @@ public interface UserService extends IService<User> {
 
     ResponseResult<String> echoLogin(String username);
 
+    ResponseResult<User> SelectById(Long id, String username);
+
 }

@@ -41,11 +41,19 @@ public class RedisConstants {
     public static final String SCENCY_LIKED_KEY = "scency:likeId:";
     public static final String PACKAGE_LIKED_KEY = "package:likeId:";
 
+    public static final String PACKAGE_SELECTRANDOM_KEY = "package:selectRandom:";
+    public static final Long SELECTRANDOM_TTL_DAY = 30L;
+    public static final String SCENCY_SELECTRANDOM_KEY = "scency:selectRandom:";
+
     //*****************************************互斥锁************************************************
 
     public static final String LOCK_CODE_KEY = "lock:Id:";
     public static final Long LOCK_CODE_TTL_SECONDS = 10L;
-    public static final String LOCK_CODE_POPULAR_KEY = "lock:";
+    public static final String LOCK_CODE_POPULAR_KEY = "lockPopular:";
+    public static final String LOCK_CODE_DISTRICT_KEY = "lockDistrict:";
+    public static final String LOCK_CODE_SHOWING_KEY = "showing:";
+
+    public static final String LOCK_CODE_SELECTRANDOM_KEY = "selectRandom:";
 
     //*****************************************其他*************************************************
 
@@ -53,5 +61,17 @@ public class RedisConstants {
 
     public static final Long PHONE_CODE_TTL_MINUTES = 1L;
 
+    //*****************************************地区*************************************************
+    public static final String DISTRICT_CODE_KEY = "district:";
+    public static final Long DISTRICT_TTL_DAYS = 30L;
 
+    //*****************************************评论评分**************************************************
+    public static final String REVIEW_CODE_KEY = "review:Id:";
+    public static final Long REVIEW_TTL_DAYS = 30L;
+
+    public static final String REVIEW_NUM_KEY = "reviewNum:Id:";
+
+
+    public static final String SCORE_NUM_KEY = "scencyScore:Id:";
+    public static final String PACKAGE_NUM_KEY = "packageScore:Id:";
 }

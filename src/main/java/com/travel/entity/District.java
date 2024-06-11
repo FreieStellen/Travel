@@ -27,16 +27,7 @@ public class District {
      * 名称（套餐/地区）
      */
     private String name;
-
-    /**
-     * 分类：1为套餐，0为单个地区
-     */
-    private int type;
-
-    /**
-     * 排序
-     */
-    private int sort;
+    
 
     /**
      * 创建时间

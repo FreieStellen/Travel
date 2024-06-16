@@ -29,20 +29,20 @@ public class RedisConstants {
     //*****************************************景点套餐**********************************************
 
     public static final String SCENCY_CODE_KEY = "scency:Id:";
-    public static final Long SCENCY_CODE_TTL_MINUTES = 30L + new Random().nextInt(6);
+    public static final Long SCENCY_CODE_TTL_DAYS = 7L + new Random().nextInt(6);
 
     public static final String SCENCY_POPULAR_KEY = "popular:scency:";
     public static final Long POPULAR_TTL_DAY = 1L;
     public static final String PACKAGE_POPULAR_KEY = "popular:package:";
 
     public static final String PACKAGE_CODE_KEY = "package:Id:";
-    public static final Long PACKAGE_CODE_TTL_MINUTES = 30L + new Random().nextInt(6);
+    public static final Long PACKAGE_CODE_TTL_DAYS = 7L + new Random().nextInt(6);
 
     public static final String SCENCY_LIKED_KEY = "scency:likeId:";
     public static final String PACKAGE_LIKED_KEY = "package:likeId:";
 
     public static final String PACKAGE_SELECTRANDOM_KEY = "package:selectRandom:";
-    public static final Long SELECTRANDOM_TTL_DAY = 30L;
+    public static final Long SELECTRANDOM_TTL_DAY = 7L;
     public static final String SCENCY_SELECTRANDOM_KEY = "scency:selectRandom:";
 
     //*****************************************互斥锁************************************************
@@ -68,10 +68,13 @@ public class RedisConstants {
     //*****************************************评论评分**************************************************
     public static final String REVIEW_CODE_KEY = "review:Id:";
     public static final Long REVIEW_TTL_DAYS = 30L;
-
     public static final String REVIEW_NUM_KEY = "reviewNum:Id:";
-
 
     public static final String SCORE_NUM_KEY = "scencyScore:Id:";
     public static final String PACKAGE_NUM_KEY = "packageScore:Id:";
+
+    //*****************************************订单**************************************************
+    public static final String TRAVELER_KEY = "traveler:";
+    public static final Long TRAVELER_TTL_DAYS = 7L;
+
 }

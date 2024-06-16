@@ -4,19 +4,28 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travel.common.CommonHolder;
 import com.travel.common.ResponseResult;
+import com.travel.entity.Order;
+import com.travel.entity.Review;
 import com.travel.entity.User;
+import com.travel.entity.UserCollect;
 import com.travel.entity.dto.LoginByIdDto;
 import com.travel.entity.dto.LoginByPhoneDto;
 import com.travel.entity.dto.UserRegistDto;
 import com.travel.entity.vo.LoginUserVo;
+import com.travel.entity.vo.UserVo;
 import com.travel.mapper.UserMapper;
+import com.travel.service.OrderService;
+import com.travel.service.ReviewService;
+import com.travel.service.UserCollectService;
 import com.travel.service.UserService;
 import com.travel.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +44,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private RedisCache redisCache;
+
+    @Resource
+    private OrderService orderService;
+
+    @Resource
+    private ReviewService reviewService;
+
+    @Resource
+    private UserCollectService userCollectService;
+
 
     /**
      * @Description: 注册用户
@@ -324,20 +343,33 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * @Description: 根据id查询
+     * @Description: 根据id查询个人信息
      * @param: id, username
      * @date: 2024/6/3 23:13
      */
 
     @Override
-    public ResponseResult<User> SelectById(Long id, String username) {
+    public ResponseResult<UserVo> SelectById() {
 
-        User user = lambdaQuery().eq(User::getId, id).eq(User::getAccountId, username).one();
+        String userId = CommonHolder.getUser();
 
-        if (Objects.isNull(user)) {
+        if (StrUtil.isBlank(userId)) {
             return null;
         }
-        return ResponseResult.success(user);
+
+        UserVo userVo = new UserVo();
+        User user = lambdaQuery().eq(User::getId, userId).one();
+        BeanUtil.copyProperties(user, userVo);
+
+        Long orderNum = orderService.lambdaQuery().eq(Order::getUserId, userId).count();
+        userVo.setOrderNum(orderNum.toString());
+
+        Long reviewNum = reviewService.lambdaQuery().eq(Review::getUserId, userId).count();
+        userVo.setReviewNum(reviewNum.toString());
+
+        Long userCollectNum = userCollectService.lambdaQuery().eq(UserCollect::getUserId, userId).count();
+        userVo.setLikedNum(userCollectNum.toString());
+        return ResponseResult.success(userVo);
     }
 
 }

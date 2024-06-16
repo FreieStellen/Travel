@@ -1,25 +1,59 @@
 package com.travel.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.travel.common.CommonHolder;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Order;
-import com.travel.entity.dto.OrderDto;
+import com.travel.entity.OrderTraveler;
+import com.travel.entity.Package;
+import com.travel.entity.Scency;
+import com.travel.entity.dto.TravelerDto;
+import com.travel.entity.vo.UserOrderVo;
 import com.travel.mapper.OrderMapper;
 import com.travel.service.OrderService;
+import com.travel.service.OrderTravelerService;
+import com.travel.service.PackageService;
+import com.travel.service.ScencyService;
+import com.travel.utils.RedisCache;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.travel.utils.RedisConstants.TRAVELER_KEY;
 
 /*
  *@ClassName OrderServiceImpl
  *@Author Freie  stellen
  *@Date 2024/5/23 17:54
  */
+@Slf4j
 @Service
+@Transactional
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements OrderService {
 
 
-//    @Autowired
-//    private OrderDetailService orderDetailService;
+    @Resource
+    private RedisCache redisCache;
+
+    @Resource
+    private OrderTravelerService orderTravelerService;
+
+    @Lazy
+    @Resource
+    private ScencyService scencyService;
+
+    @Lazy
+    @Resource
+    private PackageService packageService;
+
 
     /**
      * @Description: 新增订单
@@ -27,64 +61,87 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      * @date: 2024/5/23 18:09
      */
 
-    @Transactional
     @Override
-    public ResponseResult<String> add(OrderDto orderDto) {
-//        //1.判断有无填写其他游客
-//        //1.1获取游客信息
-//        String travelerPhone = orderDto.getTravelerPhone();
-//        String travelerNumber = orderDto.getTravelerNumber();
-//        String travelerName = orderDto.getTravelerName();
-//
-//        //1.2判断是否存在其他游客
-//        if (travelerNumber != null && travelerName != null && travelerPhone != null) {
-//            //2.对游客信息进行校验
-//            //2.1校验身份证号
-//            if (!RegexUtil.isNumberInvalid(travelerNumber)) {
-//                return ResponseResult.error("旅客身份证号码填写有误");
-//            }
-//            //2.2校验手机号
-//            if (RegexUtil.isPhoneInvalid(travelerPhone)) {
-//                return ResponseResult.error("旅客手机号码填写有误");
-//            }
-//        }
-//        //3.取到用户id
-//        String userId = CommonHolder.getUser();
-//        if (StrUtil.isBlank(userId)) {
-//            return ResponseResult.error("未登录！");
-//        }
-//        orderDto.setUserId(Long.valueOf(userId));
-//        //4.添加订单表
-//        boolean save = save(orderDto);
-//        if (!save) {
-//            return ResponseResult.error("订单提交失败");
-//        }
-//
-//        //4.提取订单id添加到订单（景点/套餐）表
-//        List<OrderDetail> list = orderDto.getList();
-//        List<OrderDetail> collect = list.stream().peek(var -> {
-//
-//            //4.1判断订单是套餐订单还是景点订单
-//            boolean flag = orderDto.isFlag();
-//            //4.2取出id
-//            Long travelId = orderDto.getTravelId();
-//            //4.3设置订单id
-//            var.setOrderId(orderDto.getId());
-//            if (flag) {
-//                //4.4true就添加景点id
-//                var.setScencyId(travelId);
-//            } else {
-//                //4.5false添加套餐id
-//                var.setPackageId(travelId);
-//            }
-//        }).collect(Collectors.toList());
-//
-//        //5.添加订单（景点/套餐）表
-//        boolean batch = orderDetailService.saveBatch(collect);
-//
-//        if (batch) {
-//            return ResponseResult.success("添加成功！");
-//        }
-        return ResponseResult.error("添加失败！");
+    public ResponseResult<String> add(Order order) {
+
+        log.info("新增订单{}", order.toString());
+
+        order.setUserId(CommonHolder.getUser());
+        order.setStatus(0);
+
+        boolean save = save(order);
+
+        if (!save) {
+            return ResponseResult.error("添加失败！");
+        }
+        Map<String, TravelerDto> map = redisCache.getCacheMap(TRAVELER_KEY);
+
+        ArrayList<OrderTraveler> list = new ArrayList<>();
+        for (Map.Entry<String, TravelerDto> map1 : map.entrySet()) {
+            OrderTraveler traveler = new OrderTraveler();
+            TravelerDto value = map1.getValue();
+            traveler.setTravelerName(value.getName());
+            traveler.setTravelerNumber(value.getNumber());
+            traveler.setTravelerPhone(value.getPhone());
+            traveler.setOrderId(order.getId());
+            list.add(traveler);
+        }
+        boolean batch = orderTravelerService.saveBatch(list);
+
+        redisCache.deleteObject(TRAVELER_KEY);
+        if (!batch) {
+            return ResponseResult.error("添加失败！");
+        }
+        return ResponseResult.success("添加成功！");
+    }
+
+    @Override
+    public ResponseResult<String> addTraveler(TravelerDto travelerDto) {
+
+        log.info("新增旅者{}", travelerDto);
+
+        HashMap<String, TravelerDto> map = new HashMap<>();
+        map.put(travelerDto.getNumber(), travelerDto);
+
+        redisCache.setCacheMap(TRAVELER_KEY, map);
+
+        return ResponseResult.success("添加旅者成功！");
+    }
+
+    @Override
+    public ResponseResult<List<UserOrderVo>> selectUserOrder() {
+
+        List<UserOrderVo> collect = lambdaQuery().eq(Order::getUserId, CommonHolder.getUser()).list()
+                .stream().map(res -> {
+                    UserOrderVo orderVo = new UserOrderVo();
+                    orderVo.setId(res.getId().toString());
+                    orderVo.setPrice(res.getGrade());
+                    orderVo.setTime(res.getCreateTime().toString());
+                    orderVo.setStatus(res.getStatus());
+
+                    if (res.getScencyId() == null) {
+                        Package one = packageService.lambdaQuery().eq(Package::getId, res.getPackageId())
+                                .one();
+                        orderVo.setName(one.getName());
+                    } else {
+                        Scency one = scencyService.lambdaQuery().eq(Scency::getId, res.getScencyId())
+                                .one();
+                        orderVo.setName(one.getName());
+                    }
+                    List<TravelerDto> list = orderTravelerService.lambdaQuery().eq(OrderTraveler::getOrderId, res.getId())
+                            .list().stream().map(var -> {
+                                TravelerDto travelerDto = new TravelerDto();
+                                travelerDto.setName(var.getTravelerName());
+                                travelerDto.setNumber(var.getTravelerNumber());
+                                travelerDto.setPhone(var.getTravelerPhone());
+
+                                return travelerDto;
+                            }).collect(Collectors.toList());
+
+                    orderVo.setTraveler(list);
+                    return orderVo;
+                }).collect(Collectors.toList());
+
+        return ResponseResult.success(collect);
     }
 }

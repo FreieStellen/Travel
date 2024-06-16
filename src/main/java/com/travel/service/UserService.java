@@ -7,6 +7,7 @@ import com.travel.entity.dto.LoginByIdDto;
 import com.travel.entity.dto.LoginByPhoneDto;
 import com.travel.entity.dto.UserRegistDto;
 import com.travel.entity.vo.LoginUserVo;
+import com.travel.entity.vo.UserVo;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,6 +23,6 @@ public interface UserService extends IService<User> {
 
     ResponseResult<String> echoLogin(String username);
 
-    ResponseResult<User> SelectById(Long id, String username);
+    ResponseResult<UserVo> SelectById();
 
 }

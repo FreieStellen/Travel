@@ -3,9 +3,9 @@ package com.travel.entity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /*
@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
  *@Date 2024/5/23 17:44
  */
 @Data
+@TableName("orders")
 public class Order {
 
     //解决反序列化兼容问题
@@ -28,22 +29,22 @@ public class Order {
     /**
      * 用户id
      */
-    private Long userId;
+    private String userId;
 
     /**
      * 景点id
      */
-    private Long scencyId;
+    private String scencyId;
 
     /**
      * 套餐id
      */
-    private Long packageId;
+    private String packageId;
 
     /**
      * 订单价格
      */
-    private BigDecimal grade;
+    private String grade;
 
     /**
      * 创建时间
@@ -57,7 +58,7 @@ public class Order {
     private LocalDateTime refundTime;
 
     /**
-     * 状态 0:待支付，1:已支付,2:已取消，3:已退款
+     * 状态 0:待支付，1:已支付,2:已取消，3:已退款，4:已完成
      */
     private int status;
 
@@ -65,4 +66,11 @@ public class Order {
      * 支付时间
      */
     private LocalDateTime payTime;
+
+    /**
+     * 预定时间
+     */
+    private String reserveTime;
+
+
 }

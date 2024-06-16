@@ -1,14 +1,15 @@
 package com.travel.controller;
 
 import com.travel.common.ResponseResult;
-import com.travel.entity.dto.OrderDto;
+import com.travel.entity.Order;
+import com.travel.entity.dto.TravelerDto;
+import com.travel.entity.vo.UserOrderVo;
 import com.travel.service.OrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /*
  *@ClassName OrderController
@@ -23,11 +24,42 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+    /**
+     * @Description: 添加订单
+     * @param: order
+     * @date: 2024/6/16 21:56
+     */
+
     @PostMapping("/add")
-    public ResponseResult<String> add(@RequestBody OrderDto orderDto) {
+    public ResponseResult<String> add(@RequestBody Order order) {
 
 
-        log.info(orderDto.toString());
-        return orderService.add(orderDto);
+        log.info(order.toString());
+        return orderService.add(order);
+    }
+
+    /**
+     * @Description: 添加出行人
+     * @param: travelerDto
+     * @date: 2024/6/16 21:56
+     */
+
+    @PostMapping("/traveler")
+    public ResponseResult<String> addTraveler(@RequestBody TravelerDto travelerDto) {
+
+        log.info(travelerDto.toString());
+        return orderService.addTraveler(travelerDto);
+    }
+
+    /**
+     * @Description: 查看个人订单
+     * @param:
+     * @date: 2024/6/16 21:56
+     */
+
+    @GetMapping("/userorder")
+    public ResponseResult<List<UserOrderVo>> selectUserOrder() {
+
+        return orderService.selectUserOrder();
     }
 }

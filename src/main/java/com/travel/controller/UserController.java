@@ -1,11 +1,11 @@
 package com.travel.controller;
 
 import com.travel.common.ResponseResult;
-import com.travel.entity.User;
 import com.travel.entity.dto.LoginByIdDto;
 import com.travel.entity.dto.LoginByPhoneDto;
 import com.travel.entity.dto.UserRegistDto;
 import com.travel.entity.vo.LoginUserVo;
+import com.travel.entity.vo.UserVo;
 import com.travel.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,10 +95,10 @@ public class UserController {
      * @date: 2024/6/3 23:13
      */
 
-    @GetMapping("/selectable/{id}/{username}")
-    public ResponseResult<User> SelectById(@PathVariable Long id, @PathVariable String username) {
-        log.info("id：{},账号：{}", id, username);
-        return userService.SelectById(id, username);
+    @GetMapping("/selectable")
+    public ResponseResult<UserVo> SelectById() {
+        return userService.SelectById();
 
     }
+
 }

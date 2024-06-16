@@ -81,7 +81,7 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
         //3.3将景点信息缓存到redis中
         //缓存时间加上1-6的随机数解决缓存雪崩问题
         redisCache.setCacheMap(key, map);
-        redisCache.expire(key, SCENCY_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+        redisCache.expire(key, SCENCY_CODE_TTL_DAYS, TimeUnit.DAYS);
 
         return ResponseResult.success("添加成功！");
     }
@@ -97,7 +97,7 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
 
         //解决缓存穿透问题
         ShowInfoVo showInfoVo = cacheClient
-                .queryWithPassThrough(SCENCY_CODE_KEY, id, Scency.class, this::getById, SCENCY_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+                .queryWithPassThrough(SCENCY_CODE_KEY, id, Scency.class, this::getById, SCENCY_CODE_TTL_DAYS, TimeUnit.DAYS);
 
 
         if (Objects.isNull(showInfoVo)) {

@@ -2,14 +2,13 @@ package com.travel.controller;
 
 import com.travel.common.ResponseResult;
 import com.travel.entity.Review;
+import com.travel.entity.vo.UserReviewVo;
 import com.travel.service.ReviewService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /*
  *@ClassName ReviewController
@@ -34,5 +33,10 @@ public class ReviewController {
     public ResponseResult<Review> add(@RequestBody Review review) {
 
         return reviewService.add(review);
+    }
+
+    @GetMapping("/selectReview")
+    public ResponseResult<List<UserReviewVo>> selectReview() {
+        return reviewService.selectReview();
     }
 }

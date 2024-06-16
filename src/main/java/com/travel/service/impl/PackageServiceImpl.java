@@ -85,7 +85,7 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
         String key = PACKAGE_CODE_KEY + id;
 
         //3.2存入redis中
-        redisCache.setCacheObject(key, packageDto, PACKAGE_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+        redisCache.setCacheObject(key, packageDto, PACKAGE_CODE_TTL_DAYS, TimeUnit.DAYS);
 
         //4.拿到套餐景点集合
         List<PackageScency> packageScencies = packageDto.getPackageScencies();
@@ -116,7 +116,7 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
 
         //查询套餐
         ShowInfoVo showInfoVo = cacheClient
-                .queryWithPassThrough(PACKAGE_CODE_KEY, id, Package.class, this::getById, PACKAGE_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+                .queryWithPassThrough(PACKAGE_CODE_KEY, id, Package.class, this::getById, PACKAGE_CODE_TTL_DAYS, TimeUnit.DAYS);
 
         if (Objects.isNull(showInfoVo)) {
             return ResponseResult.error("获取失败！");

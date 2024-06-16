@@ -7,6 +7,7 @@ import com.travel.entity.Review;
 import com.travel.entity.User;
 import com.travel.entity.vo.RecoverVo;
 import com.travel.entity.vo.ReviewVo;
+import com.travel.entity.vo.UserReviewVo;
 import com.travel.mapper.ReviewMapper;
 import com.travel.service.ReviewService;
 import com.travel.service.UserService;
@@ -109,5 +110,19 @@ public class ReviewServiceImpl extends ServiceImpl<ReviewMapper, Review> impleme
         redisCache.setCacheList(key, collect);
         redisCache.expire(key, REVIEW_TTL_DAYS, TimeUnit.DAYS);
         return ResponseResult.success(review);
+    }
+
+    @Override
+    public ResponseResult<List<UserReviewVo>> selectReview() {
+
+        List<UserReviewVo> collect = lambdaQuery().eq(Review::getUserId, CommonHolder.getUser()).list()
+                .stream().map(res -> {
+                    UserReviewVo userReviewVo = new UserReviewVo();
+                    userReviewVo.setTime(res.getCreateTime().toString());
+                    userReviewVo.setContent(res.getContent());
+                    return userReviewVo;
+                }).collect(Collectors.toList());
+
+        return ResponseResult.success(collect);
     }
 }

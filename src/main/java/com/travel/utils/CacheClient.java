@@ -839,7 +839,7 @@ public class CacheClient {
                             return selectRandomVo;
                         }).collect(Collectors.toList());
             } else {
-                list = scencyService.lambdaQuery().orderByDesc(Scency::getUpdateTime)
+                list = packageService.lambdaQuery().orderByDesc(Package::getUpdateTime)
                         .last("LIMIT 6").list()
                         .stream().map(res -> {
                             SelectRandomVo selectRandomVo = new SelectRandomVo();

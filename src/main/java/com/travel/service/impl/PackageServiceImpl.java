@@ -193,12 +193,12 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
     }
 
     @Override
-    public ResponseResult<List<SelectRandomVo>> selectRandom() {
-        List<SelectRandomVo> list = cacheClient.selectRandom(PACKAGE_SELECTRANDOM_KEY, Package.class);
+    public ResponseResult<SelectRandomVo[][]> selectRandom() {
+        SelectRandomVo[][] randomVos = cacheClient.selectRandom(PACKAGE_SELECTRANDOM_KEY, Package.class);
 
-        if (list.isEmpty()) {
+        if (randomVos.length == 0) {
             return null;
         }
-        return ResponseResult.success(list);
+        return ResponseResult.success(randomVos);
     }
 }

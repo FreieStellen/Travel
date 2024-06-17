@@ -1,8 +1,8 @@
 package com.travel;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.travel.entity.Package;
 import com.travel.entity.Review;
+import com.travel.entity.Scency;
 import com.travel.entity.vo.SelectRandomVo;
 import com.travel.mapper.DistrictMapper;
 import com.travel.mapper.PackageDistrictMapper;
@@ -57,16 +57,16 @@ class TravelApplicationTests {
     @Test
     public void TestBCryptPasswordEncoder() {
 
-        List<SelectRandomVo> list = packageService.lambdaQuery().orderByDesc(Package::getUpdateTime)
+        List<SelectRandomVo> collect = scencyService.lambdaQuery().orderByDesc(Scency::getUpdateTime)
                 .last("LIMIT 6").list()
                 .stream().map(res -> {
-
                     SelectRandomVo selectRandomVo = new SelectRandomVo();
                     selectRandomVo.setId(res.getId().toString());
-                    selectRandomVo.setImage(res.getImage());
                     selectRandomVo.setName(res.getName());
+                    selectRandomVo.setImage(res.getImage());
+
                     double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
-                                    .eq(Review::getPackageId, res.getId())
+                                    .eq(Review::getScencyId, res.getId())
                                     .isNull(Review::getBelongId)
                                     .select(Review::getScore))
                             .stream().mapToDouble(var -> (float) var).average().orElse(0);
@@ -76,7 +76,22 @@ class TravelApplicationTests {
                     selectRandomVo.setScore(score);
                     return selectRandomVo;
                 }).collect(Collectors.toList());
-        System.out.println(list);
+
+        SelectRandomVo[][] selectRandomVos = new SelectRandomVo[2][3];
+
+        SelectRandomVo[] randomVos = collect.toArray(new SelectRandomVo[0]);
+        int a = 0;
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 3; j++) {
+                selectRandomVos[i][j] = randomVos[a++];
+            }
+        }
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 3; j++) {
+                System.out.println(selectRandomVos[i][j]);
+            }
+            System.out.println();
+        }
     }
 
 }

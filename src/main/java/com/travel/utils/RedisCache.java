@@ -109,6 +109,7 @@ public class RedisCache {
         return count == null ? 0 : count;
     }
 
+
     /**
      * 获得缓存的list对象
      *
@@ -118,6 +119,7 @@ public class RedisCache {
     public <T> List<T> getCacheList(final String key) {
         return redisTemplate.opsForList().range(key, 0, -1);
     }
+
 
     /**
      * 缓存Set

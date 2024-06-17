@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -159,14 +158,14 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
     }
 
     @Override
-    public ResponseResult<List<SelectRandomVo>> selectRandom() {
+    public ResponseResult<SelectRandomVo[][]> selectRandom() {
 
-        List<SelectRandomVo> list = cacheClient.selectRandom(SCENCY_SELECTRANDOM_KEY, Scency.class);
+        SelectRandomVo[][] randomVos = cacheClient.selectRandom(SCENCY_SELECTRANDOM_KEY, Scency.class);
 
-        if (list.isEmpty()) {
+        if (randomVos.length == 0) {
             return null;
         }
-        return ResponseResult.success(list);
+        return ResponseResult.success(randomVos);
     }
 
 

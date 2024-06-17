@@ -8,8 +8,6 @@ import com.travel.entity.vo.SelectRandomVo;
 import com.travel.entity.vo.ShowInfoVo;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public interface ScencyService extends IService<Scency> {
     ResponseResult<String> add(Scency scency);
@@ -20,5 +18,5 @@ public interface ScencyService extends IService<Scency> {
 
     ResponseResult<PopularVo> popular();
 
-    ResponseResult<List<SelectRandomVo>> selectRandom();
+    ResponseResult<SelectRandomVo[][]> selectRandom();
 }

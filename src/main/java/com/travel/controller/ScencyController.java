@@ -10,8 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /*
  *@ClassName ScencyController 景点控制层
  *@Author Freie  stellen
@@ -81,7 +79,7 @@ public class ScencyController {
      */
 
     @GetMapping("/selectrandom")
-    public ResponseResult<List<SelectRandomVo>> selectRandom() {
+    public ResponseResult<SelectRandomVo[][]> selectRandom() {
         return scencyService.selectRandom();
     }
 }

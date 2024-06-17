@@ -780,16 +780,28 @@ public class CacheClient {
      * @date: 2024/6/10 15:27
      */
 
-    public <R> List<SelectRandomVo> selectRandom(String keyPrefix, Class<R> type) {
+    public <R> SelectRandomVo[][] selectRandom(String keyPrefix, Class<R> type) {
         //1.去缓存中寻找热门景点
         List<SelectRandomVo> redisList = redisCache.getCacheList(keyPrefix);
         //1.1判断类型
         boolean flag = type == Scency.class;
+
+        SelectRandomVo[][] selectRandomVos = new SelectRandomVo[2][3];
         //1.2判断集合是否为空
         if (!redisList.isEmpty()) {
+
+            SelectRandomVo[] randomVos = redisList.toArray(new SelectRandomVo[0]);
+            int a = 0;
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < 3; j++) {
+                    selectRandomVos[i][j] = randomVos[a++];
+                }
+            }
             //1.2.1不为空则返回
-            return redisList;
+            return selectRandomVos;
         }
+
+
         List<SelectRandomVo> list = null;
         try {
             //2.为空则加锁
@@ -824,16 +836,16 @@ public class CacheClient {
                             return selectRandomVo;
                         }).collect(Collectors.toList());
             } else {
-                list = packageService.lambdaQuery().orderByDesc(Package::getUpdateTime)
+                list = scencyService.lambdaQuery().orderByDesc(Scency::getUpdateTime)
                         .last("LIMIT 6").list()
                         .stream().map(res -> {
-
                             SelectRandomVo selectRandomVo = new SelectRandomVo();
                             selectRandomVo.setId(res.getId().toString());
-                            selectRandomVo.setImage(res.getImage());
                             selectRandomVo.setName(res.getName());
+                            selectRandomVo.setImage(res.getImage());
+
                             double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
-                                            .eq(Review::getPackageId, res.getId())
+                                            .eq(Review::getScencyId, res.getId())
                                             .isNull(Review::getBelongId)
                                             .select(Review::getScore))
                                     .stream().mapToDouble(var -> (float) var).average().orElse(0);
@@ -844,6 +856,14 @@ public class CacheClient {
                             return selectRandomVo;
                         }).collect(Collectors.toList());
             }
+            SelectRandomVo[] array = list.toArray(new SelectRandomVo[0]);
+            selectRandomVos = new SelectRandomVo[2][3];
+            int a = 0;
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < 3; j++) {
+                    selectRandomVos[i][j] = array[a++];
+                }
+            }
             redisCache.setCacheList(keyPrefix, list);
             redisCache.expire(keyPrefix, SELECTRANDOM_TTL_DAY, TimeUnit.DAYS);
         } catch (InterruptedException e) {
@@ -852,6 +872,6 @@ public class CacheClient {
             //释放锁
             unlock(LOCK_CODE_SELECTRANDOM_KEY);
         }
-        return list;
+        return selectRandomVos;
     }
 }

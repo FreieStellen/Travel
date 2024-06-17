@@ -12,8 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /*
  *@ClassName PackageController
  *@Author Freie  stellen
@@ -88,7 +86,7 @@ public class PackageController {
      */
 
     @GetMapping("/selectrandom")
-    public ResponseResult<List<SelectRandomVo>> selectRandom() {
+    public ResponseResult<SelectRandomVo[][]> selectRandom() {
         return packageService.selectRandom();
     }
 }

@@ -10,8 +10,6 @@ import com.travel.entity.vo.SelectRandomVo;
 import com.travel.entity.vo.ShowInfoVo;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public interface PackageService extends IService<Package> {
     ResponseResult<String> add(PackageDto packageDto);
@@ -24,6 +22,6 @@ public interface PackageService extends IService<Package> {
 
     ResponseResult<PopularVo> popular();
 
-    ResponseResult<List<SelectRandomVo>> selectRandom();
+    ResponseResult<SelectRandomVo[][]> selectRandom();
 
 }

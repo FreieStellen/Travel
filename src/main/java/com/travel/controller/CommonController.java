@@ -3,6 +3,8 @@ package com.travel.controller;
 import cn.hutool.core.util.StrUtil;
 import com.travel.common.CommonHolder;
 import com.travel.common.ResponseResult;
+import com.travel.entity.vo.SelectRandomVo;
+import com.travel.utils.CacheClient;
 import com.travel.utils.RedisCache;
 import com.travel.utils.RegexUtil;
 import com.travel.utils.ValidateCodeUtils;
@@ -12,11 +14,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +42,9 @@ public class CommonController {
 
     @Value("${Travel.path}")
     private String basePath;
+
+    @Resource
+    private CacheClient cacheClient;
 
     /**
      * @Description: 发送手机验证码(已测试)
@@ -175,5 +182,21 @@ public class CommonController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * @Description: 景点套餐模糊查询
+     * @param: name
+     * @date: 2024/6/17 21:04
+     */
+    @GetMapping("/selectlike")
+    public ResponseResult<List<SelectRandomVo>> selectLike(@RequestParam("name") String name) {
+
+        List<SelectRandomVo> list = cacheClient.selectLike(name);
+
+        if (list.size() == 0) {
+            return null;
+        }
+        return ResponseResult.success(list);
     }
 }

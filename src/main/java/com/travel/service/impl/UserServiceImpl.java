@@ -215,6 +215,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //生成JWT
         String jwt = JwtUtil.createJWT(id);
 
+        CommonHolder.saveUser(id);
+
         String key = LOGIN_CODE_KEY + id;
         //4.3将查询结果存在redis中
         redisCache.setCacheMap(key, map);
@@ -299,6 +301,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //拿到用户的id，根据id生成jwt
         String uid = user.getId().toString();
 
+        CommonHolder.saveUser(uid);
         //生成jwt令牌
         String jwt = JwtUtil.createJWT(uid);
 

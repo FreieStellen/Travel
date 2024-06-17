@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.travel.utils.RedisConstants.*;
 
@@ -875,5 +876,55 @@ public class CacheClient {
             unlock(LOCK_CODE_SELECTRANDOM_KEY);
         }
         return selectRandomVos;
+    }
+
+    /**
+     * @Description: 景点套餐模糊查询
+     * @param: name
+     * @date: 2024/6/17 21:05
+     */
+    public List<SelectRandomVo> selectLike(String name) {
+
+        List<SelectRandomVo> collect1 = packageService.lambdaQuery().like(Package::getName, name).list()
+                .stream().map(res -> {
+                    SelectRandomVo selectRandomVo = new SelectRandomVo();
+                    selectRandomVo.setId(res.getId().toString());
+                    selectRandomVo.setName(res.getName());
+                    selectRandomVo.setImage(res.getImage());
+
+                    double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
+                                    .eq(Review::getScencyId, res.getId())
+                                    .isNull(Review::getBelongId)
+                                    .select(Review::getScore))
+                            .stream().mapToDouble(var -> (float) var).average().orElse(0);
+
+                    double score = (Math.round(average * 10));
+                    score /= 10;
+                    selectRandomVo.setScore(score);
+
+                    return selectRandomVo;
+                }).collect(Collectors.toList());
+
+        List<SelectRandomVo> collect2 = scencyService.lambdaQuery().like(Scency::getName, name).list()
+                .stream().map(res -> {
+                    SelectRandomVo selectRandomVo = new SelectRandomVo();
+                    selectRandomVo.setId(res.getId().toString());
+                    selectRandomVo.setName(res.getName());
+                    selectRandomVo.setImage(res.getImage());
+
+                    double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
+                                    .eq(Review::getScencyId, res.getId())
+                                    .isNull(Review::getBelongId)
+                                    .select(Review::getScore))
+                            .stream().mapToDouble(var -> (float) var).average().orElse(0);
+
+                    double score = (Math.round(average * 10));
+                    score /= 10;
+                    selectRandomVo.setScore(score);
+
+                    return selectRandomVo;
+                }).collect(Collectors.toList());
+
+        return Stream.concat(collect1.stream(), collect2.stream()).collect(Collectors.toList());
     }
 }

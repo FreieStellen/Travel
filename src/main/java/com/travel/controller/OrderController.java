@@ -62,4 +62,27 @@ public class OrderController {
 
         return orderService.selectUserOrder();
     }
+
+    /**
+     * @Description: 回显出行人
+     * @param:
+     * @date: 2024/6/17 20:05
+     */
+
+    @GetMapping("/encho")
+    public ResponseResult<List<TravelerDto>> enchoTraveler() {
+        return orderService.enchoTraveler();
+    }
+
+    /**
+     * @Description: 修改旅者信息
+     * @param: travelerDto
+     * @date: 2024/6/17 20:40
+     */
+
+    @PostMapping("/update")
+    public ResponseResult<String> updateTraveler(@RequestBody TravelerDto travelerDto) {
+
+        return orderService.updateTraveler(travelerDto);
+    }
 }

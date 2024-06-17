@@ -16,4 +16,8 @@ public interface OrderService extends IService<Order> {
     ResponseResult<String> addTraveler(TravelerDto travelerDto);
 
     ResponseResult<List<UserOrderVo>> selectUserOrder();
+
+    ResponseResult<List<TravelerDto>> enchoTraveler();
+
+    ResponseResult<String> updateTraveler(TravelerDto travelerDto);
 }

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Package;
 import com.travel.entity.PackageScency;
+import com.travel.entity.Review;
 import com.travel.entity.dto.PackageDto;
 import com.travel.entity.vo.PopularVo;
 import com.travel.entity.vo.SelectRandomVo;
@@ -13,6 +14,7 @@ import com.travel.entity.vo.ShowInfoVo;
 import com.travel.mapper.PackageMapper;
 import com.travel.service.PackageScencyService;
 import com.travel.service.PackageService;
+import com.travel.service.ReviewService;
 import com.travel.service.UserCollectService;
 import com.travel.utils.CacheClient;
 import com.travel.utils.RedisCache;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +51,9 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
 
     @Autowired
     private UserCollectService userCollectService;
+
+    @Resource
+    private ReviewService reviewService;
 
     /**
      * @Description: 添加套餐
@@ -200,5 +206,39 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
             return null;
         }
         return ResponseResult.success(randomVos);
+    }
+
+    /*
+     * @Description: 模糊查询
+     * @param: name
+     * @date: 2024/6/17 21:00
+     */
+
+    @Override
+    public ResponseResult<List<SelectRandomVo>> selectLike(String name) {
+        List<SelectRandomVo> collect = lambdaQuery().like(Package::getName, name).list()
+                .stream().map(res -> {
+                    SelectRandomVo selectRandomVo = new SelectRandomVo();
+                    selectRandomVo.setId(res.getId().toString());
+                    selectRandomVo.setName(res.getName());
+                    selectRandomVo.setImage(res.getImage());
+
+                    double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
+                                    .eq(Review::getScencyId, res.getId())
+                                    .isNull(Review::getBelongId)
+                                    .select(Review::getScore))
+                            .stream().mapToDouble(var -> (float) var).average().orElse(0);
+
+                    double score = (Math.round(average * 10));
+                    score /= 10;
+                    selectRandomVo.setScore(score);
+
+                    return selectRandomVo;
+                }).collect(Collectors.toList());
+
+        if (collect.size() == 0) {
+            return null;
+        }
+        return ResponseResult.success(collect);
     }
 }

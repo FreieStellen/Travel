@@ -1,13 +1,16 @@
 package com.travel.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travel.common.ResponseResult;
+import com.travel.entity.Review;
 import com.travel.entity.Scency;
 import com.travel.entity.vo.PopularVo;
 import com.travel.entity.vo.SelectRandomVo;
 import com.travel.entity.vo.ShowInfoVo;
 import com.travel.mapper.ScencyMapper;
+import com.travel.service.ReviewService;
 import com.travel.service.ScencyService;
 import com.travel.service.UserCollectService;
 import com.travel.utils.CacheClient;
@@ -17,9 +20,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.travel.utils.RedisConstants.*;
 
@@ -40,6 +46,9 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
 
     @Autowired
     private UserCollectService userCollectService;
+
+    @Resource
+    private ReviewService reviewService;
 
 
     /**
@@ -157,6 +166,12 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
         return ResponseResult.success(popular);
     }
 
+    /**
+     * @Description: 查询随机六个景点
+     * @param:
+     * @date: 2024/6/17 20:55
+     */
+
     @Override
     public ResponseResult<SelectRandomVo[][]> selectRandom() {
 
@@ -166,6 +181,41 @@ public class ScencyServiceImpl extends ServiceImpl<ScencyMapper, Scency> impleme
             return null;
         }
         return ResponseResult.success(randomVos);
+    }
+
+    /**
+     * @Description: 模糊查询
+     * @param: name
+     * @date: 2024/6/17 20:55
+     */
+
+    @Override
+    public ResponseResult<List<SelectRandomVo>> selectLike(String name) {
+
+        List<SelectRandomVo> collect = lambdaQuery().like(Scency::getName, name).list()
+                .stream().map(res -> {
+                    SelectRandomVo selectRandomVo = new SelectRandomVo();
+                    selectRandomVo.setId(res.getId().toString());
+                    selectRandomVo.setName(res.getName());
+                    selectRandomVo.setImage(res.getImage());
+
+                    double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
+                                    .eq(Review::getScencyId, res.getId())
+                                    .isNull(Review::getBelongId)
+                                    .select(Review::getScore))
+                            .stream().mapToDouble(var -> (float) var).average().orElse(0);
+
+                    double score = (Math.round(average * 10));
+                    score /= 10;
+                    selectRandomVo.setScore(score);
+
+                    return selectRandomVo;
+                }).collect(Collectors.toList());
+        
+        if (collect.size() == 0) {
+            return null;
+        }
+        return ResponseResult.success(collect);
     }
 
 

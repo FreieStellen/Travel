@@ -95,6 +95,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return ResponseResult.success("添加成功！");
     }
 
+    /**
+     * @Description: 新增旅者
+     * @param: travelerDto
+     * @date: 2024/6/17 20:38
+     */
+
     @Override
     public ResponseResult<String> addTraveler(TravelerDto travelerDto) {
 
@@ -107,6 +113,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         return ResponseResult.success("添加旅者成功！");
     }
+
+    /**
+     * @Description: 查询个人订单
+     * @param:
+     * @date: 2024/6/17 20:39
+     */
 
     @Override
     public ResponseResult<List<UserOrderVo>> selectUserOrder() {
@@ -144,4 +156,48 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         return ResponseResult.success(collect);
     }
+
+    /**
+     * @Description: 回显旅者
+     * @param:
+     * @date: 2024/6/17 20:39
+     */
+
+    @Override
+    public ResponseResult<List<TravelerDto>> enchoTraveler() {
+
+        Map<String, TravelerDto> map = redisCache.getCacheMap(TRAVELER_KEY);
+
+        if (map.isEmpty()) {
+            return null;
+        }
+        List<TravelerDto> list = new ArrayList<>();
+        for (Map.Entry<String, TravelerDto> map1 : map.entrySet()) {
+            TravelerDto value = map1.getValue();
+            String name = value.getName();
+            String phone = value.getPhone();
+
+            TravelerDto travelerDto = new TravelerDto();
+            travelerDto.setPhone(phone);
+            travelerDto.setName(name);
+            travelerDto.setNumber(map1.getKey());
+            list.add(travelerDto);
+        }
+        return ResponseResult.success(list);
+    }
+
+    /**
+     * @Description: 修改旅者信息
+     * @param: travelerDto
+     * @date: 2024/6/17 20:39
+     */
+
+    @Override
+    public ResponseResult<String> updateTraveler(TravelerDto travelerDto) {
+
+        redisCache.updateHashDataValue(TRAVELER_KEY, travelerDto.getNumber(), travelerDto);
+
+        return ResponseResult.success("修改成功！");
+    }
+
 }

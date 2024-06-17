@@ -3,7 +3,7 @@ package com.travel.controller;
 import cn.hutool.core.util.StrUtil;
 import com.travel.common.CommonHolder;
 import com.travel.common.ResponseResult;
-import com.travel.entity.vo.SelectRandomVo;
+import com.travel.entity.vo.PopularVo;
 import com.travel.utils.CacheClient;
 import com.travel.utils.RedisCache;
 import com.travel.utils.RegexUtil;
@@ -190,9 +190,9 @@ public class CommonController {
      * @date: 2024/6/17 21:04
      */
     @GetMapping("/selectlike")
-    public ResponseResult<List<SelectRandomVo>> selectLike(@RequestParam("name") String name) {
+    public ResponseResult<List<PopularVo>> selectLike(@RequestParam("name") String name) {
 
-        List<SelectRandomVo> list = cacheClient.selectLike(name);
+        List<PopularVo> list = cacheClient.selectLike(name);
 
         if (list.size() == 0) {
             return null;

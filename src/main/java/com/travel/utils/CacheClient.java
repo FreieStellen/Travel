@@ -883,46 +883,36 @@ public class CacheClient {
      * @param: name
      * @date: 2024/6/17 21:05
      */
-    public List<SelectRandomVo> selectLike(String name) {
+    public List<PopularVo> selectLike(String name) {
 
-        List<SelectRandomVo> collect1 = packageService.lambdaQuery().like(Package::getName, name).list()
+        List<PopularVo> collect1 = packageService.lambdaQuery().like(Package::getName, name).list()
                 .stream().map(res -> {
-                    SelectRandomVo selectRandomVo = new SelectRandomVo();
-                    selectRandomVo.setId(res.getId().toString());
-                    selectRandomVo.setName(res.getName());
-                    selectRandomVo.setImage(res.getImage());
-
-                    double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
-                                    .eq(Review::getScencyId, res.getId())
-                                    .isNull(Review::getBelongId)
-                                    .select(Review::getScore))
-                            .stream().mapToDouble(var -> (float) var).average().orElse(0);
-
-                    double score = (Math.round(average * 10));
-                    score /= 10;
-                    selectRandomVo.setScore(score);
-
-                    return selectRandomVo;
+                    PopularVo popularVo = new PopularVo();
+                    BeanUtil.copyProperties(res, popularVo, false);
+                    StringBuilder stringBuilder = new StringBuilder();
+                    packageDistrictService.lambdaQuery().eq(PackageDistrict::getPackageId, res.getId())
+                            .list().forEach(var -> {
+                                List<String> list = districtService
+                                        .listObjs(new LambdaQueryWrapper<District>()
+                                                .eq(District::getId, var.getDistrictId())
+                                                .select(District::getName));
+                                for (String jt : list) {
+                                    stringBuilder.append(jt).append("-");
+                                }
+                                String value = String.valueOf(stringBuilder);
+                                String substring = value.substring(0, value.length() - 1);
+                                popularVo.setAddress(substring);
+                            });
+                    return popularVo;
                 }).collect(Collectors.toList());
 
-        List<SelectRandomVo> collect2 = scencyService.lambdaQuery().like(Scency::getName, name).list()
+        List<PopularVo> collect2 = scencyService.lambdaQuery().like(Scency::getName, name).list()
                 .stream().map(res -> {
-                    SelectRandomVo selectRandomVo = new SelectRandomVo();
-                    selectRandomVo.setId(res.getId().toString());
-                    selectRandomVo.setName(res.getName());
-                    selectRandomVo.setImage(res.getImage());
+                    PopularVo popularVo = new PopularVo();
+                    BeanUtil.copyProperties(res, popularVo, false);
 
-                    double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
-                                    .eq(Review::getScencyId, res.getId())
-                                    .isNull(Review::getBelongId)
-                                    .select(Review::getScore))
-                            .stream().mapToDouble(var -> (float) var).average().orElse(0);
 
-                    double score = (Math.round(average * 10));
-                    score /= 10;
-                    selectRandomVo.setScore(score);
-
-                    return selectRandomVo;
+                    return popularVo;
                 }).collect(Collectors.toList());
 
         return Stream.concat(collect1.stream(), collect2.stream()).collect(Collectors.toList());

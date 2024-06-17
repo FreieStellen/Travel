@@ -99,7 +99,7 @@ public class PackageController {
      */
 
     @GetMapping("/selectlike")
-    public ResponseResult<List<SelectRandomVo>> selectLike(@RequestParam("name") String name) {
+    public ResponseResult<List<PopularVo>> selectLike(@RequestParam("name") String name) {
         return packageService.selectLike(name);
     }
 }

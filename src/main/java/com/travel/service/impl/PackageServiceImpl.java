@@ -1,21 +1,20 @@
 package com.travel.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travel.common.ResponseResult;
+import com.travel.entity.District;
 import com.travel.entity.Package;
+import com.travel.entity.PackageDistrict;
 import com.travel.entity.PackageScency;
-import com.travel.entity.Review;
 import com.travel.entity.dto.PackageDto;
 import com.travel.entity.vo.PopularVo;
 import com.travel.entity.vo.SelectRandomVo;
 import com.travel.entity.vo.ShowInfoVo;
 import com.travel.mapper.PackageMapper;
-import com.travel.service.PackageScencyService;
-import com.travel.service.PackageService;
-import com.travel.service.ReviewService;
-import com.travel.service.UserCollectService;
+import com.travel.service.*;
 import com.travel.utils.CacheClient;
 import com.travel.utils.RedisCache;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +52,10 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
     private UserCollectService userCollectService;
 
     @Resource
-    private ReviewService reviewService;
+    private PackageDistrictService packageDistrictService;
+
+    @Resource
+    private DistrictService districtService;
 
     /**
      * @Description: 添加套餐
@@ -215,25 +217,27 @@ public class PackageServiceImpl extends ServiceImpl<PackageMapper, Package> impl
      */
 
     @Override
-    public ResponseResult<List<SelectRandomVo>> selectLike(String name) {
-        List<SelectRandomVo> collect = lambdaQuery().like(Package::getName, name).list()
+    public ResponseResult<List<PopularVo>> selectLike(String name) {
+        List<PopularVo> collect = lambdaQuery().like(Package::getName, name).list()
                 .stream().map(res -> {
-                    SelectRandomVo selectRandomVo = new SelectRandomVo();
-                    selectRandomVo.setId(res.getId().toString());
-                    selectRandomVo.setName(res.getName());
-                    selectRandomVo.setImage(res.getImage());
+                    PopularVo popularVo = new PopularVo();
+                    BeanUtil.copyProperties(res, popularVo, false);
 
-                    double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
-                                    .eq(Review::getScencyId, res.getId())
-                                    .isNull(Review::getBelongId)
-                                    .select(Review::getScore))
-                            .stream().mapToDouble(var -> (float) var).average().orElse(0);
-
-                    double score = (Math.round(average * 10));
-                    score /= 10;
-                    selectRandomVo.setScore(score);
-
-                    return selectRandomVo;
+                    StringBuilder stringBuilder = new StringBuilder();
+                    packageDistrictService.lambdaQuery().eq(PackageDistrict::getPackageId, res.getId())
+                            .list().forEach(var -> {
+                                List<String> list = districtService
+                                        .listObjs(new LambdaQueryWrapper<District>()
+                                                .eq(District::getId, var.getDistrictId())
+                                                .select(District::getName));
+                                for (String jt : list) {
+                                    stringBuilder.append(jt).append("-");
+                                }
+                                String value = String.valueOf(stringBuilder);
+                                String substring = value.substring(0, value.length() - 1);
+                                popularVo.setAddress(substring);
+                            });
+                    return popularVo;
                 }).collect(Collectors.toList());
 
         if (collect.size() == 0) {

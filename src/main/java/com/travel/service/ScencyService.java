@@ -22,5 +22,5 @@ public interface ScencyService extends IService<Scency> {
 
     ResponseResult<SelectRandomVo[][]> selectRandom();
 
-    ResponseResult<List<SelectRandomVo>> selectLike(String name);
+    ResponseResult<List<PopularVo>> selectLike(String name);
 }

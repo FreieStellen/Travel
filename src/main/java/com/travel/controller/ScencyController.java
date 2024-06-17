@@ -92,7 +92,7 @@ public class ScencyController {
      */
 
     @GetMapping("/selectlike")
-    public ResponseResult<List<SelectRandomVo>> selectLike(@RequestParam("name") String name) {
+    public ResponseResult<List<PopularVo>> selectLike(@RequestParam("name") String name) {
         return scencyService.selectLike(name);
     }
 }

@@ -648,11 +648,13 @@ public class CacheClient {
         Object data = redisData.getData();
         log.info("拿到的数据，{}", data);
         R r = JSONUtil.toBean((JSONObject) data, type);
-        BeanUtil.copyProperties(r, popularVo, false);
+        log.info("转化的数据{}", r);
+        BeanUtil.copyProperties(data, popularVo, false);
         //3.1判断逻辑时间是否过期
         if (expireTime.isAfter(LocalDateTime.now())) {
             //3.2未过期就转化对象并返回
             log.info("数据没过期");
+            log.info("返回的数据{}", popularVo);
             return popularVo;
         }
         //4.过期就重建缓存
@@ -709,7 +711,7 @@ public class CacheClient {
                         String substring = value.substring(0, value.length() - 1);
                         popularVo.setAddress(substring);
                     });
-            setWithLogicalExpire(keyPrefix, aPackage, POPULAR_TTL_DAY, TimeUnit.DAYS);
+            setWithLogicalExpire(keyPrefix, popularVo, POPULAR_TTL_DAY, TimeUnit.DAYS);
         }
         return popularVo;
     }

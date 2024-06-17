@@ -14,10 +14,10 @@ import java.util.List;
 public class ShowInfoVo {
 
     //套餐表的主键id
-    private Long id;
+    private String id;
 
     //景点表的地区id
-    private Long districtId;
+    private String districtId;
 
     //套餐的地区名称集合
     private List<Object> districtList;

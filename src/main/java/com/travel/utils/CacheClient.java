@@ -272,7 +272,7 @@ public class CacheClient {
                     .list().stream().map(res ->
                     {
                         ReviewVo reviewVo = new ReviewVo();
-                        reviewVo.setId(res.getId());
+                        reviewVo.setId(res.getId().toString());
                         reviewVo.setContent(res.getContent());
                         reviewVo.setScore(String.valueOf(res.getScore()));
                         userService.lambdaQuery().eq(User::getId, res.getUserId()).list().forEach(var -> {
@@ -403,7 +403,7 @@ public class CacheClient {
                     .list().stream().map(res ->
                     {
                         ReviewVo reviewVo = new ReviewVo();
-                        reviewVo.setId(res.getId());
+                        reviewVo.setId(res.getId().toString());
                         reviewVo.setContent(res.getContent());
                         reviewVo.setScore(String.valueOf(res.getScore()));
                         userService.lambdaQuery().eq(User::getId, res.getUserId()).list().forEach(var -> {

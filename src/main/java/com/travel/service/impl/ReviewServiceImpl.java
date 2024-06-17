@@ -77,7 +77,7 @@ public class ReviewServiceImpl extends ServiceImpl<ReviewMapper, Review> impleme
                 .list().stream().map(res ->
                 {
                     ReviewVo reviewVo = new ReviewVo();
-                    reviewVo.setId(res.getId());
+                    reviewVo.setId(res.getId().toString());
                     reviewVo.setContent(res.getContent());
                     reviewVo.setScore(String.valueOf(res.getScore()));
                     userService.lambdaQuery().eq(User::getId, res.getUserId()).list().forEach(var -> {

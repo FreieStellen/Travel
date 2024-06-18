@@ -66,7 +66,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         log.info("新增订单{}", order.toString());
 
-        order.setUserId(CommonHolder.getUser());
+
+        order.setUserId(redisCache.getCacheObject("user:"));
         order.setStatus(0);
 
         boolean save = save(order);
@@ -85,6 +86,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             traveler.setTravelerPhone(value.getPhone());
             traveler.setOrderId(order.getId());
             list.add(traveler);
+        }
+        if (list.size() == 0) {
+            return ResponseResult.success("添加成功！");
         }
         boolean batch = orderTravelerService.saveBatch(list);
 

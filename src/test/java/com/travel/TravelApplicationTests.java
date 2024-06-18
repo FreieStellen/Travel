@@ -1,8 +1,6 @@
 package com.travel;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.travel.entity.District;
-import com.travel.entity.PackageDistrict;
+import com.travel.common.CommonHolder;
 import com.travel.mapper.DistrictMapper;
 import com.travel.mapper.PackageDistrictMapper;
 import com.travel.mapper.PackageMapper;
@@ -13,8 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @SpringBootTest
 class TravelApplicationTests {
@@ -56,17 +52,8 @@ class TravelApplicationTests {
     @Test
     public void TestBCryptPasswordEncoder() {
 
-        String packageId = "1792481230557470130";
-        List<Object> districtList = packageDistrictService.listObjs(new LambdaQueryWrapper<PackageDistrict>()
-                        .eq(PackageDistrict::getPackageId, packageId)
-                        .select(PackageDistrict::getDistrictId))
-                .stream().map(res -> districtService.listObjs(new LambdaQueryWrapper<District>()
-                        .eq(District::getId, res).select(District::getName))
-
-                ).collect(Collectors.toList());
-
-        List<Object> collect = districtList.stream().distinct().collect(Collectors.toList());
-        System.out.println(collect);
+        String user = CommonHolder.getUser();
+        System.out.println(user);
     }
 
 }

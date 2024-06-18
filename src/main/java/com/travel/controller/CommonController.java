@@ -100,7 +100,7 @@ public class CommonController {
 
         //从redis中移除用户
         boolean deleteObject = redisCache.deleteObject(key);
-
+        redisCache.deleteObject("user:");
         if (!deleteObject) {
             return ResponseResult.error("登陆状态异常！");
         }

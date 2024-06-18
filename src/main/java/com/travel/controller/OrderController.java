@@ -80,9 +80,22 @@ public class OrderController {
      * @date: 2024/6/17 20:40
      */
 
-    @PostMapping("/update")
+    @PostMapping("/traveler-update")
     public ResponseResult<String> updateTraveler(@RequestBody TravelerDto travelerDto) {
 
         return orderService.updateTraveler(travelerDto);
+    }
+
+
+    /**
+     * @Description: 删除旅者信息
+     * @param: number
+     * @date: 2024/6/18 14:18
+     */
+
+    @GetMapping("/traveler-delete/{number}")
+    public ResponseResult<String> deleteTraveler(@PathVariable String number) {
+
+        return orderService.deleteTraveler(number);
     }
 }

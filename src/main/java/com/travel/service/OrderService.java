@@ -20,4 +20,6 @@ public interface OrderService extends IService<Order> {
     ResponseResult<List<TravelerDto>> enchoTraveler();
 
     ResponseResult<String> updateTraveler(TravelerDto travelerDto);
+
+    ResponseResult<String> deleteTraveler(String number);
 }

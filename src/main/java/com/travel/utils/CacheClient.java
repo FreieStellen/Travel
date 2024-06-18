@@ -425,10 +425,17 @@ public class CacheClient {
                                     });
                                     return recoverVo;
                                 }).collect(Collectors.toList());
+                        if (collect1.size() == 0) {
+                            reviewVo.setRecover(null);
+                        }
                         reviewVo.setRecover(collect1);
                         return reviewVo;
                     })
                     .collect(Collectors.toList());
+
+            if (collect.isEmpty()) {
+                
+            }
             String listReviewKey = REVIEW_CODE_KEY + scencyId;
             redisCache.setCacheList(listReviewKey, collect);
             redisCache.expire(listReviewKey, REVIEW_TTL_DAYS, TimeUnit.DAYS);

@@ -200,4 +200,18 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return ResponseResult.success("修改成功！");
     }
 
+    /**
+     * @Description: 删除旅者信息
+     * @param: number
+     * @date: 2024/6/18 14:18
+     */
+
+    @Override
+    public ResponseResult<String> deleteTraveler(String number) {
+
+        redisCache.delCacheMapValue(TRAVELER_KEY, number);
+
+        return ResponseResult.success("删除成功！");
+    }
+
 }

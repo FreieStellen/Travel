@@ -1,7 +1,6 @@
 package com.travel.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.travel.common.CommonHolder;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Review;
 import com.travel.entity.User;
@@ -55,7 +54,8 @@ public class ReviewServiceImpl extends ServiceImpl<ReviewMapper, Review> impleme
         log.info("拿到的评论是：{}", review);
 
         //1.添加数据库
-        review.setUserId(Long.valueOf(CommonHolder.getUser()));
+//        review.setUserId(Long.valueOf(CommonHolder.getUser()));
+        review.setUserId(Long.valueOf(redisCache.getCacheObject("user:")));
         boolean save = save(review);
 
         //1.1判断数据库是否添加成功
@@ -115,7 +115,7 @@ public class ReviewServiceImpl extends ServiceImpl<ReviewMapper, Review> impleme
     @Override
     public ResponseResult<List<UserReviewVo>> selectReview() {
 
-        List<UserReviewVo> collect = lambdaQuery().eq(Review::getUserId, CommonHolder.getUser()).list()
+        List<UserReviewVo> collect = lambdaQuery().eq(Review::getUserId, redisCache.getCacheObject("user:")).list()
                 .stream().map(res -> {
                     UserReviewVo userReviewVo = new UserReviewVo();
                     userReviewVo.setTime(res.getCreateTime().toString());

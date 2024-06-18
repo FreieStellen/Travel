@@ -1,7 +1,6 @@
 package com.travel.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.travel.common.CommonHolder;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Package;
 import com.travel.entity.Scency;
@@ -11,6 +10,7 @@ import com.travel.mapper.UserCollectMapper;
 import com.travel.service.PackageService;
 import com.travel.service.ScencyService;
 import com.travel.service.UserCollectService;
+import com.travel.utils.RedisCache;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -35,10 +35,13 @@ public class UserCollectServiceImpl extends ServiceImpl<UserCollectMapper, UserC
     @Resource
     private PackageService packageService;
 
+    @Resource
+    private RedisCache redisCache;
+
     @Override
     public ResponseResult<List<UserCollectVo>> selectCollect() {
 
-        List<UserCollectVo> list = lambdaQuery().eq(UserCollect::getUserId, CommonHolder.getUser()).list()
+        List<UserCollectVo> list = lambdaQuery().eq(UserCollect::getUserId, redisCache.getCacheObject("user:")).list()
                 .stream().map(res -> {
                     UserCollectVo collectVo = new UserCollectVo();
 

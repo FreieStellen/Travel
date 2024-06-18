@@ -1,7 +1,6 @@
 package com.travel.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.travel.common.CommonHolder;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Order;
 import com.travel.entity.OrderTraveler;
@@ -127,7 +126,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     public ResponseResult<List<UserOrderVo>> selectUserOrder() {
 
-        List<UserOrderVo> collect = lambdaQuery().eq(Order::getUserId, CommonHolder.getUser()).list()
+        List<UserOrderVo> collect = lambdaQuery().eq(Order::getUserId, redisCache.getCacheObject("user:")).list()
                 .stream().map(res -> {
                     UserOrderVo orderVo = new UserOrderVo();
                     orderVo.setId(res.getId().toString());

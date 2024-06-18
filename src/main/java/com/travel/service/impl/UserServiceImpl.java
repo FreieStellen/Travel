@@ -363,7 +363,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         UserVo userVo = new UserVo();
-        User user = lambdaQuery().eq(User::getId, userId).one();
+        User user = lambdaQuery().eq(User::getId, redisCache.getCacheObject("user:")).one();
         BeanUtil.copyProperties(user, userVo);
 
         Long orderNum = orderService.lambdaQuery().eq(Order::getUserId, userId).count();

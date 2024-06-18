@@ -247,13 +247,14 @@ public class CacheClient {
             //2.3拿锁成功去查询数据库
             //2.3.1查询地区表(套餐地区)并加入缓存
             log.info("套餐信息不存在Redis中，拿到锁成功！");
-            List<Object> districtList = packageDistrictService.listObjs(new LambdaQueryWrapper<PackageDistrict>()
+            List<Object> objectList = packageDistrictService.listObjs(new LambdaQueryWrapper<PackageDistrict>()
                             .eq(PackageDistrict::getPackageId, packageId)
                             .select(PackageDistrict::getDistrictId))
                     .stream().map(res ->
                             districtService.listObjs(new LambdaQueryWrapper<District>()
                                     .eq(District::getId, res).select(District::getName))
                     ).collect(Collectors.toList());
+            List<Object> districtList = objectList.stream().distinct().collect(Collectors.toList());
             String listDistrictKey = DISTRICT_CODE_KEY + packageId;
             redisCache.setCacheList(listDistrictKey, districtList);
             redisCache.expire(listDistrictKey, DISTRICT_TTL_DAYS, TimeUnit.DAYS);
@@ -434,7 +435,7 @@ public class CacheClient {
                     .collect(Collectors.toList());
 
             if (collect.isEmpty()) {
-                
+
             }
             String listReviewKey = REVIEW_CODE_KEY + scencyId;
             redisCache.setCacheList(listReviewKey, collect);
@@ -712,8 +713,8 @@ public class CacheClient {
                                 .listObjs(new LambdaQueryWrapper<District>()
                                         .eq(District::getId, var.getDistrictId())
                                         .select(District::getName));
-                        for (String jt : list) {
-                            stringBuilder.append(jt).append("-");
+                        for (String kt : list) {
+                            stringBuilder.append(kt).append("-");
                         }
                         String value = String.valueOf(stringBuilder);
                         String substring = value.substring(0, value.length() - 1);
@@ -826,7 +827,7 @@ public class CacheClient {
             //2.3获取锁成功查询数据库并存到redis中
             log.info("拿到锁");
             if (flag) {
-                list = scencyService.lambdaQuery().orderByDesc(Scency::getUpdateTime)
+                list = scencyService.lambdaQuery().orderByDesc(Scency::getLiked)
                         .last("LIMIT 6").list()
                         .stream().map(res -> {
                             SelectRandomVo selectRandomVo = new SelectRandomVo();
@@ -846,7 +847,7 @@ public class CacheClient {
                             return selectRandomVo;
                         }).collect(Collectors.toList());
             } else {
-                list = packageService.lambdaQuery().orderByDesc(Package::getUpdateTime)
+                list = packageService.lambdaQuery().orderByDesc(Package::getLiked)
                         .last("LIMIT 6").list()
                         .stream().map(res -> {
                             SelectRandomVo selectRandomVo = new SelectRandomVo();

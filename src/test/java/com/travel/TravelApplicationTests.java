@@ -60,12 +60,13 @@ class TravelApplicationTests {
         List<Object> districtList = packageDistrictService.listObjs(new LambdaQueryWrapper<PackageDistrict>()
                         .eq(PackageDistrict::getPackageId, packageId)
                         .select(PackageDistrict::getDistrictId))
-                .stream().map(res ->
-                        districtService.listObjs(new LambdaQueryWrapper<District>()
-                                .eq(District::getId, res).select(District::getName)).stream().distinct().collect(Collectors.toList())
+                .stream().map(res -> districtService.listObjs(new LambdaQueryWrapper<District>()
+                        .eq(District::getId, res).select(District::getName))
+
                 ).collect(Collectors.toList());
 
-        System.out.println(districtList);
+        List<Object> collect = districtList.stream().distinct().collect(Collectors.toList());
+        System.out.println(collect);
     }
 
 }

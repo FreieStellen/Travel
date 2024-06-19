@@ -71,7 +71,6 @@ public class RedisConstants {
     public static final String REVIEW_NUM_KEY = "reviewNum:Id:";
 
     public static final String SCORE_NUM_KEY = "scencyScore:Id:";
-    public static final String PACKAGE_NUM_KEY = "packageScore:Id:";
 
     //*****************************************订单**************************************************
     public static final String TRAVELER_KEY = "traveler:";

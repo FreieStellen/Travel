@@ -3,9 +3,6 @@ package com.travel.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.travel.common.ResponseResult;
 import com.travel.entity.Review;
-import com.travel.entity.User;
-import com.travel.entity.vo.RecoverVo;
-import com.travel.entity.vo.ReviewVo;
 import com.travel.entity.vo.UserReviewVo;
 import com.travel.mapper.ReviewMapper;
 import com.travel.service.ReviewService;
@@ -18,11 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.travel.utils.RedisConstants.REVIEW_CODE_KEY;
-import static com.travel.utils.RedisConstants.REVIEW_TTL_DAYS;
+import static com.travel.utils.RedisConstants.*;
 
 /*
  *@ClassName ReviewServiceImpl
@@ -66,49 +61,49 @@ public class ReviewServiceImpl extends ServiceImpl<ReviewMapper, Review> impleme
         }
         //2.成功就删除缓存重建缓存
         Long id = review.getScencyId() == null ? review.getPackageId() : review.getScencyId();
-        String key = REVIEW_CODE_KEY + id;
-        redisCache.deleteObject(key);
-
+        redisCache.deleteObject(REVIEW_NUM_KEY + id);
+        redisCache.deleteObject(REVIEW_CODE_KEY + id);
+        redisCache.deleteObject(SCORE_NUM_KEY + id);
         //2.1查询数据库
-        List<ReviewVo> collect = lambdaQuery()
-                .eq(review.getScencyId() != null, Review::getScencyId, review.getScencyId())
-                .eq(review.getScencyId() == null, Review::getPackageId, review.getPackageId())
-                .isNull(Review::getBelongId)
-                .list().stream().map(res ->
-                {
-                    ReviewVo reviewVo = new ReviewVo();
-                    reviewVo.setId(res.getId().toString());
-                    reviewVo.setContent(res.getContent());
-                    reviewVo.setScore(String.valueOf(res.getScore()));
-                    userService.lambdaQuery().eq(User::getId, res.getUserId()).list().forEach(var -> {
-                        //2.1.1需要封装vo将用户的账户和头像封装
-                        reviewVo.setName(var.getAccountId());
-                        reviewVo.setAvatar(var.getAvatar());
-                    });
-                    //2.1.2封装子评论
-                    List<RecoverVo> collect1 = lambdaQuery()
-                            .eq(review.getScencyId() != null, Review::getScencyId, review.getScencyId())
-                            .eq(review.getScencyId() == null, Review::getPackageId, review.getPackageId())
-                            .eq(Review::getScore, 0.0)
-                            .eq(Review::getBelongId, res.getId())
-                            .list().stream().map(jt -> {
-                                RecoverVo recoverVo = new RecoverVo();
-                                recoverVo.setContent(jt.getContent());
-                                userService.lambdaQuery().eq(User::getId, jt.getUserId()).list().forEach(skt -> {
-                                    recoverVo.setName(skt.getAccountId());
-                                    recoverVo.setAvatar(skt.getAvatar());
-                                });
-                                return recoverVo;
-                            }).collect(Collectors.toList());
-                    reviewVo.setRecover(collect1);
-                    return reviewVo;
-                })
-                .collect(Collectors.toList());
-
-        System.out.println(collect);
-        //2.2刷新redis
-        redisCache.setCacheList(key, collect);
-        redisCache.expire(key, REVIEW_TTL_DAYS, TimeUnit.DAYS);
+//        List<ReviewVo> collect = lambdaQuery()
+//                .eq(review.getScencyId() != null, Review::getScencyId, review.getScencyId())
+//                .eq(review.getScencyId() == null, Review::getPackageId, review.getPackageId())
+//                .isNull(Review::getBelongId)
+//                .list().stream().map(res ->
+//                {
+//                    ReviewVo reviewVo = new ReviewVo();
+//                    reviewVo.setId(res.getId().toString());
+//                    reviewVo.setContent(res.getContent());
+//                    reviewVo.setScore(String.valueOf(res.getScore()));
+//                    userService.lambdaQuery().eq(User::getId, res.getUserId()).list().forEach(var -> {
+//                        //2.1.1需要封装vo将用户的账户和头像封装
+//                        reviewVo.setName(var.getAccountId());
+//                        reviewVo.setAvatar(var.getAvatar());
+//                    });
+//                    //2.1.2封装子评论
+//                    List<RecoverVo> collect1 = lambdaQuery()
+//                            .eq(review.getScencyId() != null, Review::getScencyId, review.getScencyId())
+//                            .eq(review.getScencyId() == null, Review::getPackageId, review.getPackageId())
+//                            .eq(Review::getScore, 0.0)
+//                            .eq(Review::getBelongId, res.getId())
+//                            .list().stream().map(jt -> {
+//                                RecoverVo recoverVo = new RecoverVo();
+//                                recoverVo.setContent(jt.getContent());
+//                                userService.lambdaQuery().eq(User::getId, jt.getUserId()).list().forEach(skt -> {
+//                                    recoverVo.setName(skt.getAccountId());
+//                                    recoverVo.setAvatar(skt.getAvatar());
+//                                });
+//                                return recoverVo;
+//                            }).collect(Collectors.toList());
+//                    reviewVo.setRecover(collect1);
+//                    return reviewVo;
+//                })
+//                .collect(Collectors.toList());
+//
+//        System.out.println(collect);
+//        //2.2刷新redis
+//        redisCache.setCacheList(key, collect);
+//        redisCache.expire(key, REVIEW_TTL_DAYS, TimeUnit.DAYS);
         return ResponseResult.success(review);
     }
 

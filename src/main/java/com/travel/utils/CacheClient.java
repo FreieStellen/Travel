@@ -214,7 +214,7 @@ public class CacheClient {
         Long num = redisCache.getCacheObject(REVIEW_NUM_KEY + packageId);
         log.info("查询redis评论表(评论数)成功！{}", num);
         //1.3缓存中查找对应套餐的评分
-        Double redisScore = redisCache.getCacheObject(PACKAGE_NUM_KEY + packageId);
+        Double redisScore = redisCache.getCacheObject(SCORE_NUM_KEY + packageId);
         log.info("查询redis评论表(评分)成功！{}", redisScore);
         //1.4缓存中查找对应套餐的评论
         List<ReviewVo> redisList = redisCache.getCacheList(REVIEW_CODE_KEY + packageId);
@@ -313,7 +313,7 @@ public class CacheClient {
                     .stream().mapToDouble(res -> (float) res).average().orElse(0);
             double score = (Math.round(average * 10));
             score /= 10;
-            redisCache.setCacheObject(PACKAGE_NUM_KEY + packageId, score, REVIEW_TTL_DAYS, TimeUnit.DAYS);
+            redisCache.setCacheObject(SCORE_NUM_KEY + packageId, score, REVIEW_TTL_DAYS, TimeUnit.DAYS);
             log.info("查询评论表(评分)成功！{}", score);
 
             if (!districtList.isEmpty()) {
@@ -856,7 +856,7 @@ public class CacheClient {
                             selectRandomVo.setImage(res.getImage());
 
                             double average = reviewService.listObjs(new LambdaQueryWrapper<Review>()
-                                            .eq(Review::getScencyId, res.getId())
+                                            .eq(Review::getPackageId, res.getId())
                                             .isNull(Review::getBelongId)
                                             .select(Review::getScore))
                                     .stream().mapToDouble(var -> (float) var).average().orElse(0);
